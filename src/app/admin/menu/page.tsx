@@ -155,6 +155,16 @@ export default function AdminMenuPage() {
     }
   }, [catalog, isLoaded]);
 
+  if (!isLoaded) {
+    return (
+      <div className="flex h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-white/5 animate-pulse">
+        <p className="text-white/40 font-accent uppercase tracking-widest text-sm">
+          Initializing Menu Manager...
+        </p>
+      </div>
+    );
+  }
+
   const persistCatalog = async (nextCategories: Category[], nextItems: MenuItem[]) => {
     setCategories(nextCategories);
     setItems(nextItems);

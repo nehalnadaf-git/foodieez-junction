@@ -19,6 +19,8 @@ export interface BuildWhatsAppMessageInput {
   paymentMethod: "cash" | "upi";
   estimatedTime: string;
   upiId: string;
+  /** Restaurant name pulled from settings — used in the message greeting and UPI note. */
+  restaurantName: string;
   specialInstructions?: string;
 }
 
@@ -41,15 +43,15 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
 
   const paymentLine = `💳 Payment: ${input.paymentMethod === "cash" ? "Cash" : "UPI"}`;
 
-  const upiLink = `upi://pay?pa=${encodeURIComponent(input.upiId)}&pn=${encodeURIComponent("Foodieez Junction")}&am=${input.totalAmount}&cu=INR&tn=${encodeURIComponent(`Order ${input.orderId}`)}`;
+  const upiLink = `upi://pay?pa=${encodeURIComponent(input.upiId)}&pn=${encodeURIComponent(input.restaurantName)}&am=${input.totalAmount}&cu=INR&tn=${encodeURIComponent(`Order ${input.orderId}`)}`;
 
   const specialInstructionsLine =
     input.specialInstructions && input.specialInstructions.trim().length > 0
       ? `\n📝 Special Instructions: ${input.specialInstructions.trim()}`
       : "";
 
-  return [
-    "Hi! I'd like to place an order at Foodieez Junction 🍽️",
+  const lines = [
+    `Hi! I'd like to place an order at ${input.restaurantName} 🍽️`,
     `Order ID: ${input.orderId}`,
     "",
     "*Order Details:*",
@@ -60,23 +62,36 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
     orderTypeLine,
     `👤 Name: ${input.customerName}`,
     paymentLine,
-    input.paymentMethod === "upi" ? "" : null,
-    input.paymentMethod === "upi" ? `💰 Pay here: ${upiLink}` : null,
-    specialInstructionsLine.length > 0 ? specialInstructionsLine : null,
-    "",
-    `⏱️ Estimated Time: ${input.estimatedTime}`,
-    "Thank you!",
-  ]
-    .filter((line): line is string => line !== null)
-    .join("\n");
+  ];
+
+  if (input.paymentMethod === "upi") {
+    lines.push("");
+    lines.push(`💰 Pay here: ${upiLink}`);
+  }
+
+  if (specialInstructionsLine.length > 0) {
+    lines.push(specialInstructionsLine);
+  }
+
+  lines.push("");
+  lines.push(`⏱️ Estimated Time: ${input.estimatedTime}`);
+  lines.push("Thank you!");
+
+  return lines.join("\n");
 }
 
 /**
  * Builds a wa.me URL with a safely encoded message payload.
+ * Handles numbers with or without a leading +91 India country code.
  */
 export function buildWhatsAppUrl(phoneNumber: string, message: string): string {
+  // Strip everything except digits
   const digits = phoneNumber.replace(/\D/g, "");
-  const withCountryCode = digits.startsWith("91") ? digits : `91${digits}`;
-  const encodedMessage = encodeURIComponent(message);
-  return `https://wa.me/${withCountryCode}?text=${encodedMessage}`;
+
+  // Prepend India country code if not already present
+  const withCountryCode = digits.startsWith("91") && digits.length > 10
+    ? digits
+    : `91${digits}`;
+
+  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }

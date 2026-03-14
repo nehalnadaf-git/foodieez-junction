@@ -410,9 +410,23 @@ const MenuSection = () => {
                              lg:pt-10 lg:px-0 lg:pb-0"
                   style={{ overflow: "visible", alignItems: "stretch" }}
                 >
-                  {items.map((item, i) => (
-                    <MenuItemCard key={item.id} item={item} index={i} />
-                  ))}
+                  {menuItems.length === 0 ? (
+                    /* Skeleton Card */
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={`menu-skeleton-${cat.id}-${i}`} className="relative pt-[55px] animate-pulse">
+                         <div className="absolute left-1/2 -translate-x-1/2 top-[-10px] w-[130px] h-[130px] rounded-full bg-white/5 border border-white/10 z-10" />
+                         <div className="glass h-[220px] rounded-[22px] flex flex-col p-4 pt-[80px] gap-3">
+                            <div className="h-4 w-3/4 bg-white/5 rounded" />
+                            <div className="h-8 w-1/2 bg-white/5 rounded-full mt-2" />
+                            <div className="mt-auto h-10 w-full bg-white/5 rounded-xl" />
+                         </div>
+                      </div>
+                    ))
+                  ) : (
+                    items.map((item, i) => (
+                      <MenuItemCard key={item.id} item={item} index={i} />
+                    ))
+                  )}
                 </div>
               </div>
             );

@@ -132,7 +132,15 @@ const CartDrawer = () => {
                 {!isOpen && (
                   <div className="glass rounded-xl border-red-500/40 bg-red-500/10 px-4 py-3">
                     <p className="text-sm font-heading font-semibold text-red-300">
-                      We&apos;re currently closed. Opens at 2:00 PM today!
+                      We&apos;re currently closed. Opens at{" "}
+                      {(() => {
+                        const [hh, mm] = settings.order.openTimeIst.split(":");
+                        const h = parseInt(hh, 10);
+                        const suffix = h >= 12 ? "PM" : "AM";
+                        const h12 = h % 12 || 12;
+                        return `${h12}:${mm} ${suffix}`;
+                      })()}{" "}
+                      today!
                     </p>
                   </div>
                 )}
