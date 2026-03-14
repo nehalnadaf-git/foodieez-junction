@@ -35,7 +35,7 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-30px" }}
       transition={{ delay: (index % 6) * 0.055, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="relative pt-[55px] lg:pt-[78px]"
+      className="relative flex flex-col h-full pt-[55px] lg:pt-[78px]"
       style={{ overflow: "visible" }}
     >
       {/* ── Food image (next/image) ── */}
@@ -68,7 +68,7 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
 
       {/* ── Glass card ── */}
       <div
-        className="relative flex flex-col h-[220px] lg:h-[260px]"
+        className="relative flex flex-col flex-1 h-full min-h-[245px] lg:min-h-[260px]"
         style={{
           background: "rgba(255,255,255,0.15)",
           backdropFilter: "blur(20px)",

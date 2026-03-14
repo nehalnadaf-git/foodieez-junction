@@ -29,6 +29,7 @@ const OrderModal = () => {
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [orderId, setOrderId] = useState("");
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const availablePayments = useMemo<PaymentMethod[]>(() => {
     const methods: PaymentMethod[] = [];
@@ -84,9 +85,11 @@ const OrderModal = () => {
   const submitOrder = useMutation(api.orders.submit);
 
   const sendOrder = async () => {
-    if (!orderType || !payment || !orderId) {
+    if (!orderType || !payment || !orderId || isSubmitting) {
       return;
     }
+
+    setIsSubmitting(true);
 
     const orderItems = items.map((cartItem) => {
       const baseUnitPrice =
@@ -112,29 +115,6 @@ const OrderModal = () => {
       };
     });
 
-    try {
-      await submitOrder({
-        orderId,
-        customerName: name.trim(),
-        orderType: orderType === "dine-in" && scannedTableNumber ? "qr-dine-in" : orderType,
-        tableNumber: orderType === "dine-in" ? tableNo.trim() : undefined,
-        paymentMethod: payment,
-        specialInstructions: specialInstructions.trim() || undefined,
-        items: orderItems.map(item => ({
-          name: item.name,
-          itemId: item.itemId,
-          size: item.size,
-          quantity: item.quantity,
-          price: item.price,
-        })),
-        totalAmount: totalPrice,
-        status: "pending",
-      });
-    } catch (e) {
-      console.error("Failed to save order to database:", e);
-      // We still proceed so customer can order via WhatsApp!
-    }
-
     const message = buildWhatsAppMessage({
       orderId,
       items: orderItems,
@@ -154,10 +134,35 @@ const OrderModal = () => {
         ? settings.order.dineInWhatsappNumber
         : settings.order.takeawayWhatsappNumber;
 
+    // Open WhatsApp BEFORE any async call so the browser doesn't block
+    // the popup (user-gesture trust is lost after an await boundary).
     window.open(buildWhatsAppUrl(targetNumber, message), "_blank");
     setShowSuccess(true);
+
+    // Save order to database in the background — failure is non-critical.
+    submitOrder({
+      orderId,
+      customerName: name.trim(),
+      orderType: orderType === "dine-in" && scannedTableNumber ? "qr-dine-in" : orderType,
+      tableNumber: orderType === "dine-in" ? tableNo.trim() : undefined,
+      paymentMethod: payment,
+      specialInstructions: specialInstructions.trim() || undefined,
+      items: orderItems.map(item => ({
+        name: item.name,
+        itemId: item.itemId,
+        size: item.size,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+      totalAmount: totalPrice,
+      status: "pending",
+    }).catch((e) => {
+      console.error("Failed to save order to database:", e);
+    });
+
     window.setTimeout(() => {
       clearCart();
+      setIsSubmitting(false);
     }, 2000);
   };
 
@@ -421,9 +426,10 @@ const OrderModal = () => {
                   ) : (
                     <button
                       onClick={sendOrder}
-                      className="flex-1 py-3 rounded-full bg-primary text-primary-foreground font-heading font-bold text-sm shimmer hover:shadow-lg hover:shadow-primary/30 transition-all"
+                      disabled={isSubmitting}
+                      className="flex-1 py-3 rounded-full bg-primary text-primary-foreground font-heading font-bold text-sm shimmer hover:shadow-lg hover:shadow-primary/30 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     >
-                      Send via WhatsApp 💬
+                      {isSubmitting ? "Placing Order…" : "Place Order"}
                     </button>
                   )}
                 </div>
