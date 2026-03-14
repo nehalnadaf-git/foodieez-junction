@@ -1,7 +1,13 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  /* config options here */
-};
+  cacheComponents: true,
+  images: {
+    remotePatterns: [], // all images are local assets; extend here when adding external CDN
+  },
+  experimental: {
+    turbopackFileSystemCacheForDev: true,
+  },
+}
 
-export default nextConfig;
+export default nextConfig
