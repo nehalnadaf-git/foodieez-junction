@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -138,6 +138,9 @@ export default function AdminMenuPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(emptyCategoryForm);
   const [itemForm, setItemForm] = useState<ItemFormState>(emptyItemForm);
+
+  const categoryFormRef = useRef<HTMLDivElement>(null);
+  const itemFormRef = useRef<HTMLDivElement>(null);
 
   const catalog = useQuery(api.menu.getCatalog);
   const saveCatalog = useMutation(api.menu.saveCatalog);
@@ -390,7 +393,7 @@ export default function AdminMenuPage() {
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <div ref={categoryFormRef} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-white">
                 {editingCategoryId ? "Edit Category" : "Add Category"}
@@ -482,6 +485,7 @@ export default function AdminMenuPage() {
                         onClick={() => {
                           setEditingCategoryId(category.id);
                           setCategoryForm(toCategoryForm(category));
+                          categoryFormRef.current?.scrollIntoView({ behavior: "smooth" });
                         }}
                         className="rounded-full border border-white/10 bg-white/5 p-2 text-white/75 transition-colors hover:border-primary/30 hover:text-primary"
                         aria-label={`Edit ${category.name}`}
@@ -505,7 +509,7 @@ export default function AdminMenuPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+          <div ref={itemFormRef} className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-white">
                 {editingItemId ? "Edit Menu Item" : "Add Menu Item"}
@@ -744,6 +748,7 @@ export default function AdminMenuPage() {
                               onClick={() => {
                                 setEditingItemId(item.id);
                                 setItemForm(toItemForm(item));
+                                itemFormRef.current?.scrollIntoView({ behavior: "smooth" });
                               }}
                               className="rounded-full border border-white/10 bg-white/5 p-2 text-white/75 transition-colors hover:border-primary/30 hover:text-primary"
                               aria-label={`Edit ${item.name}`}
