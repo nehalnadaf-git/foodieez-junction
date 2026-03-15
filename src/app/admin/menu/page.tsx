@@ -155,6 +155,22 @@ export default function AdminMenuPage() {
     }
   }, [catalog, isLoaded]);
 
+  // ── All hooks must be called before any early return ──
+  const groupedItems = useMemo(
+    () =>
+      categories.map((category) => ({
+        category,
+        items: items.filter((item) => item.category === category.id),
+      })),
+    [categories, items]
+  );
+
+  useEffect(() => {
+    if (categories.length > 0 && !itemForm.category) {
+      setItemForm((current) => ({ ...current, category: categories[0].id }));
+    }
+  }, [categories, itemForm.category]);
+
   if (!isLoaded) {
     return (
       <div className="flex h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-white/5 animate-pulse">
@@ -168,23 +184,12 @@ export default function AdminMenuPage() {
   const persistCatalog = async (nextCategories: Category[], nextItems: MenuItem[]) => {
     setCategories(nextCategories);
     setItems(nextItems);
-    if (isLoaded) {
-      try {
-        await saveCatalog({ categories: nextCategories, items: nextItems });
-      } catch (err) {
-        toast.error("Failed to sync with database");
-      }
+    try {
+      await saveCatalog({ categories: nextCategories, items: nextItems });
+    } catch (err) {
+      toast.error("Failed to sync with database");
     }
   };
-
-  const groupedItems = useMemo(
-    () =>
-      categories.map((category) => ({
-        category,
-        items: items.filter((item) => item.category === category.id),
-      })),
-    [categories, items]
-  );
 
   const resetCategoryForm = () => {
     setCategoryForm(emptyCategoryForm);
@@ -198,12 +203,6 @@ export default function AdminMenuPage() {
     });
     setEditingItemId(null);
   };
-
-  useEffect(() => {
-    if (categories.length > 0 && !itemForm.category) {
-      setItemForm((current) => ({ ...current, category: categories[0].id }));
-    }
-  }, [categories, itemForm.category]);
 
   const handleCategorySubmit = () => {
     const trimmedName = categoryForm.name.trim();
