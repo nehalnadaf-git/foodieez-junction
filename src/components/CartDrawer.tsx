@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart, getItemPrice } from "@/context/CartContext";
 import { AnimatePresence, motion } from "framer-motion";
@@ -22,8 +23,19 @@ const CartDrawer = () => {
   } = useCart();
   const { isOpen } = useOperatingHours();
   const { settings } = useAppSettings();
-
   const canPlaceOrder = totalItems > 0 && isOpen;
+
+  // Body scroll lock
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isCartOpen]);
 
   return (
     <AnimatePresence>
@@ -126,87 +138,90 @@ const CartDrawer = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, x: 40, scale: 0.95 }}
                         transition={{ duration: 0.22 }}
-                        className="rounded-2xl px-4 py-3.5 flex items-center gap-4"
+                        className="rounded-2xl px-4 py-4 space-y-4"
                         style={{
-                          background: "hsl(var(--foreground) / 0.04)",
+                          background: "hsl(var(--foreground) / 0.03)",
                           border: "1px solid hsl(var(--foreground) / 0.07)",
                         }}
                       >
-                        {/* Veg / Non-veg indicator dot */}
-                        <div className="flex-shrink-0 flex flex-col items-center justify-start pt-0.5">
+                        {/* Top Row: Name and Remove */}
+                        <div className="flex items-start gap-3">
+                          {/* Veg Indicator */}
+                          <div className="flex-shrink-0 pt-1">
+                            <div
+                              className="w-3.5 h-3.5 rounded-sm flex items-center justify-center"
+                              style={{
+                                border: `1.2px solid ${isVeg ? "#22c55e" : "#ef4444"}`,
+                              }}
+                            >
+                              <div
+                                className="w-1.5 h-1.5 rounded-full"
+                                style={{
+                                  background: isVeg ? "#22c55e" : "#ef4444",
+                                }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[15px] font-bold text-foreground leading-snug">
+                              {ci.item.name}
+                            </p>
+                            {ci.size !== "single" && (
+                              <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">
+                                {ci.size === "small" ? "Small Portion" : "Large Portion"}
+                              </p>
+                            )}
+                          </div>
+
+                          <button
+                            onClick={() => removeItem(ci.item.id, ci.size)}
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* Bottom Row: Controls and Price */}
+                        <div className="flex items-center justify-between pt-1 border-t border-foreground/5">
                           <div
-                            className="w-4 h-4 rounded-sm flex items-center justify-center"
+                            className="flex items-center gap-1 rounded-full p-0.5"
                             style={{
-                              border: `1.5px solid ${isVeg ? "#22c55e" : "#ef4444"}`,
+                              background: "hsl(var(--foreground) / 0.05)",
+                              border: "1px solid hsl(var(--foreground) / 0.07)",
                             }}
                           >
-                            <div
-                              className="w-2 h-2 rounded-full"
-                              style={{
-                                background: isVeg ? "#22c55e" : "#ef4444",
-                              }}
-                            />
+                            <button
+                              onClick={() =>
+                                updateQuantity(ci.item.id, ci.size, ci.quantity - 1)
+                              }
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                            >
+                              <Minus className="w-3.5 h-3.5" />
+                            </button>
+                            <span className="text-sm font-bold text-foreground w-6 text-center">
+                              {ci.quantity}
+                            </span>
+                            <button
+                              onClick={() =>
+                                updateQuantity(ci.item.id, ci.size, ci.quantity + 1)
+                              }
+                              disabled={ci.quantity >= maxQuantityPerItem}
+                              className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground font-medium mb-0.5">
+                              ₹{price} × {ci.quantity}
+                            </p>
+                            <p className="text-[15px] font-bold text-primary">
+                              ₹{price * ci.quantity}
+                            </p>
                           </div>
                         </div>
-
-                        {/* Item Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground leading-tight truncate">
-                            {ci.item.name}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5 font-medium">
-                            {ci.size !== "single"
-                              ? `${ci.size === "small" ? "Small" : "Large"} · `
-                              : ""}
-                            ₹{price} each
-                          </p>
-                        </div>
-
-                        {/* Quantity Controls */}
-                        <div
-                          className="flex items-center gap-1.5 rounded-full px-1 py-1"
-                          style={{
-                            background: "hsl(var(--foreground) / 0.06)",
-                            border: "1px solid hsl(var(--foreground) / 0.08)",
-                          }}
-                        >
-                          <button
-                            onClick={() =>
-                              updateQuantity(ci.item.id, ci.size, ci.quantity - 1)
-                            }
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-                          >
-                            <Minus className="w-3 h-3" />
-                          </button>
-                          <span className="text-sm font-bold text-foreground w-5 text-center">
-                            {ci.quantity}
-                          </span>
-                          <button
-                            onClick={() =>
-                              updateQuantity(ci.item.id, ci.size, ci.quantity + 1)
-                            }
-                            disabled={ci.quantity >= maxQuantityPerItem}
-                            className="w-6 h-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-                          >
-                            <Plus className="w-3 h-3" />
-                          </button>
-                        </div>
-
-                        {/* Line total */}
-                        <span
-                          className="text-sm font-bold text-primary w-14 text-right flex-shrink-0"
-                          style={{ fontVariantNumeric: "tabular-nums" }}
-                        >
-                          ₹{price * ci.quantity}
-                        </span>
-
-                        {/* Remove */}
-                        <button
-                          onClick={() => removeItem(ci.item.id, ci.size)}
-                          className="text-muted-foreground/50 hover:text-red-400 transition-colors flex-shrink-0"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
                       </motion.div>
                     );
                   })}
