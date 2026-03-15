@@ -98,17 +98,7 @@ export default function AdminOrderSettingsPage() {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs uppercase tracking-wider text-white/70">
-              Minimum Order Value
-            </label>
-            <input
-              type="number"
-              min={1}
-              {...form.register("minimumOrderValue", { valueAsNumber: true })}
-              className={inputClass}
-            />
-          </div>
+
           <div>
             <label className="mb-1 block text-xs uppercase tracking-wider text-white/70">
               Max Quantity Per Item

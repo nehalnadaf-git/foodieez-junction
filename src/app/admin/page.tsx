@@ -60,13 +60,7 @@ export default function AdminDashboardPage() {
           </p>
         </article>
 
-        <article className={statCardClass}>
-          <p className="text-xs uppercase tracking-wider text-white/60">Minimum Order</p>
-          <p className="mt-2 text-xl font-semibold text-primary">
-            {settings.restaurant.currencySymbol}
-            {settings.order.minimumOrderValue}
-          </p>
-        </article>
+
 
         <article className={statCardClass}>
           <p className="text-xs uppercase tracking-wider text-white/60">Max Per Item</p>
