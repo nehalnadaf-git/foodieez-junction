@@ -290,11 +290,16 @@ const OrderModal = () => {
                                 setTableNo(scannedTableNumber);
                               }
                             }}
-                            className={`glass p-6 text-center transition-all rounded-xl ${orderType === type
-                              ? "border-primary bg-primary/10 ring-2 ring-primary"
+                            className={`relative glass p-6 text-center transition-all rounded-xl ${orderType === type
+                              ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]"
                               : "hover:border-primary/30"
                               }`}
                           >
+                            {orderType === type && (
+                              <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                                <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
+                              </div>
+                            )}
                             <span className="text-3xl block mb-2">
                               {type === "dine-in" ? "🪑" : "📦"}
                             </span>
@@ -383,11 +388,16 @@ const OrderModal = () => {
                                 isAvailable && setPayment(method)
                               }
                               disabled={!isAvailable}
-                              className={`glass p-6 text-center transition-all rounded-xl ${payment === method
-                                ? "border-primary bg-primary/10 ring-2 ring-primary"
+                              className={`relative glass p-6 text-center transition-all rounded-xl ${payment === method
+                                ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]"
                                 : "hover:border-primary/30"
                                 } disabled:opacity-40 disabled:cursor-not-allowed`}
                             >
+                              {payment === method && (
+                                <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                                  <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
+                                </div>
+                              )}
                               <span className="text-3xl block mb-2">
                                 {method === "cash" ? "💵" : "📲"}
                               </span>
