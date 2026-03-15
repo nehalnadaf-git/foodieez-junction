@@ -194,12 +194,9 @@ const HeroSection = () => {
             height: 180px !important;
             object-fit: contain !important;
             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.22)) !important;
-            animation: hero-float-m 6s ease-in-out infinite !important;
+            transform: translateY(20px) !important; /* Move it down slightly and keep it static */
           }
-          @keyframes hero-float-m {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-8px); }
-          }
+          /* Removed floating animation keyframes */
           .hero-halo {
             position: absolute !important;
             width: 150% !important;
