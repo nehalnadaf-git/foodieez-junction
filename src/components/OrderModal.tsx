@@ -112,8 +112,8 @@ const OrderModal = () => {
         cartItem.size === "small" && cartItem.item.priceSmall
           ? cartItem.item.priceSmall
           : cartItem.size === "large" && cartItem.item.priceLarge
-          ? cartItem.item.priceLarge
-          : cartItem.item.price || 0;
+            ? cartItem.item.priceLarge
+            : cartItem.item.price || 0;
       const unitPrice = getItemPrice(cartItem.item, cartItem.size);
       const sizeSuffix =
         cartItem.size === "single"
@@ -261,9 +261,8 @@ const OrderModal = () => {
                     {stepSegments.map((seg) => (
                       <div
                         key={seg}
-                        className={`flex-1 h-1 rounded-full transition-colors duration-300 ${
-                          seg <= visualStep ? "bg-primary" : "bg-muted"
-                        }`}
+                        className={`flex-1 h-1 rounded-full transition-colors duration-300 ${seg <= visualStep ? "bg-primary" : "bg-muted"
+                          }`}
                       />
                     ))}
                   </div>
@@ -291,11 +290,10 @@ const OrderModal = () => {
                                 setTableNo(scannedTableNumber);
                               }
                             }}
-                            className={`glass p-6 text-center transition-all rounded-xl ${
-                              orderType === type
-                                ? "border-primary/60 bg-primary/10"
-                                : "hover:border-primary/30"
-                            }`}
+                            className={`glass p-6 text-center transition-all rounded-xl ${orderType === type
+                              ? "border-primary bg-primary/10 ring-2 ring-primary"
+                              : "hover:border-primary/30"
+                              }`}
                           >
                             <span className="text-3xl block mb-2">
                               {type === "dine-in" ? "🪑" : "📦"}
@@ -385,11 +383,10 @@ const OrderModal = () => {
                                 isAvailable && setPayment(method)
                               }
                               disabled={!isAvailable}
-                              className={`glass p-6 text-center transition-all rounded-xl ${
-                                payment === method
-                                  ? "border-primary/60 bg-primary/10"
-                                  : "hover:border-primary/30"
-                              } disabled:opacity-40 disabled:cursor-not-allowed`}
+                              className={`glass p-6 text-center transition-all rounded-xl ${payment === method
+                                ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                : "hover:border-primary/30"
+                                } disabled:opacity-40 disabled:cursor-not-allowed`}
                             >
                               <span className="text-3xl block mb-2">
                                 {method === "cash" ? "💵" : "📲"}
@@ -433,8 +430,8 @@ const OrderModal = () => {
                             {orderType === "dine-in"
                               ? `Dine-In${scannedTableNumber ? " (QR)" : ""}`
                               : scannedTableNumber
-                              ? `Takeaway (at Table ${scannedTableNumber})`
-                              : "Takeaway"}
+                                ? `Takeaway (at Table ${scannedTableNumber})`
+                                : "Takeaway"}
                           </p>
                           <p>
                             <span className="text-muted-foreground">
@@ -472,19 +469,19 @@ const OrderModal = () => {
                             );
                             const baseUnitPrice =
                               cartItem.size === "small" &&
-                              cartItem.item.priceSmall
+                                cartItem.item.priceSmall
                                 ? cartItem.item.priceSmall
                                 : cartItem.size === "large" &&
                                   cartItem.item.priceLarge
-                                ? cartItem.item.priceLarge
-                                : cartItem.item.price || 0;
+                                  ? cartItem.item.priceLarge
+                                  : cartItem.item.price || 0;
                             const hasDiscount =
                               Boolean(cartItem.item.offer) &&
                               isOfferActive(cartItem.item.offer) &&
                               (cartItem.item.offer?.type ===
                                 "percentage_off" ||
                                 cartItem.item.offer?.type ===
-                                  "flat_discount") &&
+                                "flat_discount") &&
                               calculateDiscountedPrice(
                                 baseUnitPrice,
                                 cartItem.item.offer

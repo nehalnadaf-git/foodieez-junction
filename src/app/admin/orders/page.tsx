@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { motion } from "framer-motion";
@@ -13,10 +14,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+type OrderStatus = "pending" | "preparing" | "completed" | "cancelled";
+
 export default function AdminOrdersPage() {
   const orders = useQuery(api.orders.getOrders);
   const updateStatus = useMutation(api.orders.updateStatus);
   const deleteOrder = useMutation(api.orders.deleteOrder);
+  const [mobileTab, setMobileTab] = useState<OrderStatus>("pending");
 
   const pendingOrders = orders?.filter((o) => o.status === "pending") || [];
   const preparingOrders = orders?.filter((o) => o.status === "preparing") || [];
@@ -165,18 +169,32 @@ export default function AdminOrdersPage() {
     </div>
   );
 
+  const mobileTabs: { value: OrderStatus; label: string; count: number; activeBg: string }[] = [
+    { value: "pending", label: "Pending", count: pendingOrders.length, activeBg: "bg-amber-400/20 text-amber-300 border-amber-400/40" },
+    { value: "preparing", label: "Prep", count: preparingOrders.length, activeBg: "bg-blue-400/20 text-blue-300 border-blue-400/40" },
+    { value: "completed", label: "Done", count: completedOrders.length, activeBg: "bg-emerald-400/20 text-emerald-300 border-emerald-400/40" },
+    { value: "cancelled", label: "Cancel", count: cancelledOrders.length, activeBg: "bg-red-400/20 text-red-300 border-red-400/40" },
+  ];
+
+  const mobileOrdersMap: Record<OrderStatus, any[]> = {
+    pending: pendingOrders,
+    preparing: preparingOrders,
+    completed: completedOrders,
+    cancelled: cancelledOrders,
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.28 }}
-      className="space-y-6 flex flex-col h-[calc(100vh-2rem)]"
+      className="space-y-4"
     >
       <div>
         <h2 className="bg-gradient-to-r from-[#F5A623] to-[#C47B05] bg-clip-text text-3xl font-bold text-transparent">
           Live Orders
         </h2>
-        <p className="mt-2 text-sm text-white/65">
+        <p className="mt-1 text-sm text-white/65">
           Real-time order tracking dashboard synced with WhatsApp orders.
         </p>
       </div>
@@ -186,67 +204,94 @@ export default function AdminOrdersPage() {
           Loading live orders…
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1 min-h-0">
-          {/* Pending */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-            <h3 className="flex items-center gap-2 text-amber-400 font-bold mb-4 shrink-0">
-              <Clock className="w-5 h-5" /> Pending ({pendingOrders.length})
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {pendingOrders.map(renderOrderCard)}
-              {pendingOrders.length === 0 && (
-                <div className="text-white/30 text-sm text-center mt-10">
-                  No pending orders
+        <>
+          {/* ── MOBILE: Tab bar + single scrollable column ── */}
+          <div className="lg:hidden space-y-4">
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {mobileTabs.map((tab) => (
+                <button
+                  key={tab.value}
+                  onClick={() => setMobileTab(tab.value)}
+                  className={`shrink-0 rounded-full border px-4 py-2 text-xs font-bold transition-all duration-200 ${
+                    mobileTab === tab.value
+                      ? tab.activeBg
+                      : "border-white/10 bg-white/5 text-white/60"
+                  }`}
+                >
+                  {tab.label}
+                  <span className="ml-1.5 rounded-full bg-white/10 px-1.5 py-0.5 text-[10px]">
+                    {tab.count}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              {mobileOrdersMap[mobileTab].length > 0 ? (
+                mobileOrdersMap[mobileTab].map(renderOrderCard)
+              ) : (
+                <div className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white/40 text-sm">
+                  No orders in this state
                 </div>
               )}
             </div>
           </div>
 
-          {/* Preparing */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-            <h3 className="flex items-center gap-2 text-blue-400 font-bold mb-4 shrink-0">
-              <ChefHat className="w-5 h-5" /> Preparing ({preparingOrders.length})
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {preparingOrders.map(renderOrderCard)}
-              {preparingOrders.length === 0 && (
-                <div className="text-white/30 text-sm text-center mt-10">
-                  No active prep
-                </div>
-              )}
+          {/* ── DESKTOP: 4-column Kanban ── */}
+          <div className="hidden lg:grid grid-cols-4 gap-4" style={{ height: "calc(100vh - 14rem)" }}>
+            {/* Pending */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-amber-400 font-bold mb-4 shrink-0">
+                <Clock className="w-5 h-5" /> Pending ({pendingOrders.length})
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {pendingOrders.map(renderOrderCard)}
+                {pendingOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No pending orders</div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Completed */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-            <h3 className="flex items-center gap-2 text-emerald-400 font-bold mb-4 shrink-0">
-              <CheckCircle2 className="w-5 h-5" /> Completed ({completedOrders.length})
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {completedOrders.map(renderOrderCard)}
-              {completedOrders.length === 0 && (
-                <div className="text-white/30 text-sm text-center mt-10">
-                  No completed orders
-                </div>
-              )}
+            {/* Preparing */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-blue-400 font-bold mb-4 shrink-0">
+                <ChefHat className="w-5 h-5" /> Preparing ({preparingOrders.length})
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {preparingOrders.map(renderOrderCard)}
+                {preparingOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No active prep</div>
+                )}
+              </div>
             </div>
-          </div>
 
-          {/* Cancelled */}
-          <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-            <h3 className="flex items-center gap-2 text-red-400 font-bold mb-4 shrink-0">
-              <XCircle className="w-5 h-5" /> Cancelled ({cancelledOrders.length})
-            </h3>
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-              {cancelledOrders.map(renderOrderCard)}
-              {cancelledOrders.length === 0 && (
-                <div className="text-white/30 text-sm text-center mt-10">
-                  No cancelled orders
-                </div>
-              )}
+            {/* Completed */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-emerald-400 font-bold mb-4 shrink-0">
+                <CheckCircle2 className="w-5 h-5" /> Completed ({completedOrders.length})
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {completedOrders.map(renderOrderCard)}
+                {completedOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No completed orders</div>
+                )}
+              </div>
+            </div>
+
+            {/* Cancelled */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-red-400 font-bold mb-4 shrink-0">
+                <XCircle className="w-5 h-5" /> Cancelled ({cancelledOrders.length})
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {cancelledOrders.map(renderOrderCard)}
+                {cancelledOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No cancelled orders</div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </motion.section>
   );

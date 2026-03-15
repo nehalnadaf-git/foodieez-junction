@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
         Dashboard
       </h2>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
         <article className={statCardClass}>
           <p className="text-xs uppercase tracking-wider text-white/60">Restaurant Status</p>
           <p className={`mt-2 text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
