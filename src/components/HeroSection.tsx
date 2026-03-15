@@ -194,7 +194,7 @@ const HeroSection = () => {
             height: 180px !important;
             object-fit: contain !important;
             filter: drop-shadow(0 12px 24px rgba(0,0,0,0.22)) !important;
-            transform: translateY(20px) !important; /* Move it down slightly and keep it static */
+            transform: translateY(45px) !important; /* Moved further down as requested */
           }
           /* Removed floating animation keyframes */
           .hero-halo {
