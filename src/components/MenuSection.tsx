@@ -322,8 +322,8 @@ const MenuSection = () => {
           </h2>
         </motion.div>
 
-        {/* Sticky category filter bar */}
-        <div className="sticky top-[60px] md:top-[68px] z-30 py-3">
+        {/* Category filter bar (Non-sticky) */}
+        <div className="relative z-30 py-3">
           <div
             className="mx-auto w-fit max-w-full rounded-2xl px-2.5 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide"
             style={{
