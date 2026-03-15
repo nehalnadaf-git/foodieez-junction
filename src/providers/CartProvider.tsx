@@ -202,12 +202,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
     0
   );
 
-  const remainingForMinimum = useMemo(
-    () => Math.max(0, minimumOrderValue - totalPrice),
-    [minimumOrderValue, totalPrice]
-  );
-
-  const meetsMinimumOrder = remainingForMinimum <= 0;
+  const remainingForMinimum = 0;
+  const meetsMinimumOrder = true;
 
   return (
     <CartContext.Provider

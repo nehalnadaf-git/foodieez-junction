@@ -23,7 +23,7 @@ const CartDrawer = () => {
   const { isOpen } = useOperatingHours();
   const { settings } = useAppSettings();
 
-  const canPlaceOrder = totalItems > 0 && meetsMinimumOrder && isOpen;
+  const canPlaceOrder = totalItems > 0 && isOpen;
 
   return (
     <AnimatePresence>
@@ -243,22 +243,7 @@ const CartDrawer = () => {
                   </div>
                 )}
 
-                {/* Min order banner */}
-                {!meetsMinimumOrder && (
-                  <div
-                    className="rounded-xl px-4 py-3"
-                    style={{
-                      background: "hsl(var(--primary) / 0.07)",
-                      border: "1px solid hsl(var(--primary) / 0.22)",
-                    }}
-                  >
-                    <p className="text-sm font-semibold text-primary">
-                      Minimum order is {settings.restaurant.currencySymbol}
-                      {minimumOrderValue}. Add {settings.restaurant.currencySymbol}
-                      {remainingForMinimum} more to continue.
-                    </p>
-                  </div>
-                )}
+
 
                 {/* Subtotal row */}
                 <div className="flex items-center justify-between px-1">
