@@ -261,6 +261,7 @@ export default function AdminMenuPage() {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<MenuItem | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(emptyCategoryForm);
   const [itemForm, setItemForm] = useState<ItemFormState>(emptyItemForm);
 
@@ -528,15 +529,17 @@ export default function AdminMenuPage() {
     setCategoryToDelete(null);
   };
 
-  const handleDeleteItem = (itemId: string) => {
+  const confirmDeleteItem = () => {
+    if (!itemToDelete) return;
     persistCatalog(
       categories,
-      items.filter((item) => item.id !== itemId)
+      items.filter((item) => item.id !== itemToDelete.id)
     );
-    if (editingItemId === itemId) {
+    if (editingItemId === itemToDelete.id) {
       resetItemForm();
     }
     toast.success("Menu item deleted");
+    setItemToDelete(null);
   };
 
   const handleResetDefaults = () => {
@@ -955,7 +958,7 @@ export default function AdminMenuPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => handleDeleteItem(item.id)}
+                              onClick={() => setItemToDelete(item)}
                               className="rounded-full border border-red-400/30 bg-red-500/10 p-2 text-red-300 transition-colors hover:bg-red-500/20"
                               aria-label={`Delete ${item.name}`}
                             >
@@ -994,6 +997,29 @@ export default function AdminMenuPage() {
               className="bg-red-500 text-white hover:bg-red-600"
             >
               Delete Category
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent className="border-white/10 bg-[hsl(20,18%,7%)] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription className="text-white/60">
+              Do you want to confirm delete this menu item: <span className="font-bold text-primary">"{itemToDelete?.name}"</span>? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-white/10 bg-white/5 text-white hover:bg-white/10 hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteItem}
+              className="bg-red-500 text-white hover:bg-red-600"
+            >
+              Delete Item
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

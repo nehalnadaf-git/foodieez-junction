@@ -15,7 +15,7 @@ import OrderModal from "@/components/OrderModal";
 import { ReviewsSection } from "@/components/reviews/ReviewsSection";
 import TableIndicatorBanner from "@/components/TableIndicatorBanner";
 import TableParamSync from "@/components/TableParamSync";
-import { RestaurantClosedBanner } from "@/components/customer/RestaurantClosedBanner";
+
 
 export const metadata: Metadata = {
   title: "Home",
@@ -29,7 +29,7 @@ export default function HomePage() {
       {/* Grain overlay */}
       <div className="grain" />
       
-      <RestaurantClosedBanner />
+
       <ScrollProgress />
       <Suspense fallback={null}>
         <TableParamSync />

@@ -12,7 +12,6 @@ import {
   Star,
   Tag,
   Sliders,
-  Shield,
   LogOut,
   BellRing,
   Menu,
@@ -32,7 +31,6 @@ const navItems = [
   { href: "/admin/reviews", label: "Review Management", icon: Star },
   { href: "/admin/offers", label: "Offers & Discounts", icon: Tag },
   { href: "/admin/settings", label: "Settings", icon: Sliders },
-  { href: "/admin/security", label: "Security", icon: Shield },
 ] as const;
 
 export function AdminSidebar() {
