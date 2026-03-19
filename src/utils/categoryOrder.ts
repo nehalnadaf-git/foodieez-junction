@@ -143,3 +143,21 @@ export function getVisibleSortedCategories(categories: MenuCategory[]): MenuCate
   const sorted = getSortedCategories(categories);
   return sorted.filter((cat) => cat.visible !== false);
 }
+
+/**
+ * Reassigns order values after a category is deleted to fill any gaps
+ * @param categories - Array of remaining MenuCategory objects
+ * @returns Array of MenuCategory with normalized order numbers
+ */
+export function reorderAfterDelete(categories: MenuCategory[]): MenuCategory[] {
+  const sorted = [...categories].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  return reassignCategoryOrder(sorted);
+}
+
+/**
+ * Persists updated categories to localStorage
+ * @param categories - Array of MenuCategory
+ */
+export function saveCategories(categories: MenuCategory[]): void {
+  saveCategoryOrder(categories);
+}

@@ -4,9 +4,11 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { getCategoryImage } from "@/data/menuData";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
+import { getVisibleSortedCategories } from "@/utils/categoryOrder";
 
 const CategoriesGrid = () => {
-  const { categories, menuItems } = useMenuCatalog();
+  const { categories: rawCategories, menuItems } = useMenuCatalog();
+  const categories = getVisibleSortedCategories(rawCategories);
 
   const scrollTo = (catId: string) => {
     document

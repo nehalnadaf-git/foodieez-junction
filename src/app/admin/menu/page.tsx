@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   categories as defaultCategories,
@@ -13,11 +13,28 @@ import {
 } from "@/data/menuData";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
+import {
+  DndContext,
+  closestCenter,
+  TouchSensor,
+  MouseSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ImageUploader } from "@/components/admin/menu/ImageUploader";
 import { OfferEditor } from "@/components/admin/offers/OfferEditor";
-import { CategoryOrderManager } from "@/components/admin/menu/CategoryOrderManager";
-import { getSortedCategories } from "@/utils/categoryOrder";
+import { getSortedCategories, reassignCategoryOrder, reorderAfterDelete, saveCategories } from "@/utils/categoryOrder";
 import { getOfferLabel } from "@/utils/offer";
 import {
   AlertDialog,
@@ -128,6 +145,123 @@ function toItemForm(item: MenuItem): ItemFormState {
   };
 }
 
+interface SortableCategoryRowProps {
+  category: Category;
+  count: number;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function SortableCategoryRow({ category, count, onEdit, onDelete }: SortableCategoryRowProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: category.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  if (isDragging) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className="flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-amber-400/60 bg-amber-400/10 px-4 py-3 h-[88px] sm:h-[68px]"
+      >
+        <div className="opacity-0 w-full h-full text-sm">Placeholder</div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={"flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-none touch-none transition-shadow duration-300"}
+    >
+      <div className="flex items-center gap-3">
+        <button
+          className="flex h-[44px] w-[44px] shrink-0 items-center justify-start text-[#FBA919] transition-colors md:h-[24px] md:w-[24px] cursor-grab hover:text-amber-300 active:cursor-grabbing"
+          {...attributes}
+          {...listeners}
+          title="Hold and drag to reorder"
+          aria-label="Drag handle"
+        >
+          <GripVertical className="h-[20px] w-[20px]" />
+        </button>
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/20 hidden sm:block">
+          {category.image ? (
+            <img src={category.image} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20">NO IMG</div>
+          )}
+        </div>
+        <div>
+          <p className="font-bold text-white max-w-[150px] sm:max-w-[180px] lg:max-w-xs">{category.name}</p>
+          <p className="mt-1 text-xs text-white/50 truncate max-w-[120px] sm:max-w-[160px] lg:max-w-xs">{category.id} • {count} items</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="rounded-full border border-white/10 bg-white/5 p-2 text-white/75 transition-colors hover:border-primary/30 hover:text-primary z-10"
+          aria-label={`Edit ${category.name}`}
+        >
+          <Pencil className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="rounded-full border border-red-400/30 bg-red-500/10 p-2 text-red-300 transition-colors hover:bg-red-500/20 z-10"
+          aria-label={`Delete ${category.name}`}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function DragOverlayRow({ category, count }: { category: Category; count: number }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-2xl border border-amber-400/60 bg-[hsl(20,18%,9%)] px-4 py-3 shadow-[0_16px_48px_rgba(0,0,0,0.6)] scale-[1.02] opacity-95 pointer-events-none origin-center cursor-grabbing z-50">
+      <div className="flex items-center gap-3">
+        <div className="flex h-[44px] w-[44px] shrink-0 items-center justify-start text-[#FBA919] md:h-[24px] md:w-[24px]">
+          <GripVertical className="h-[20px] w-[20px]" />
+        </div>
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-black/20 hidden sm:block">
+          {category.image ? (
+            <img src={category.image} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20">NO IMG</div>
+          )}
+        </div>
+        <div>
+          <p className="font-bold text-white max-w-[150px] sm:max-w-[180px] lg:max-w-xs">{category.name}</p>
+          <p className="mt-1 text-xs text-white/50 truncate max-w-[120px] sm:max-w-[160px] lg:max-w-xs">{category.id} • {count} items</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <div className="rounded-full border border-white/10 bg-white/5 p-2 text-white/75">
+          <Pencil className="h-4 w-4" />
+        </div>
+        <div className="rounded-full border border-red-400/30 bg-red-500/10 p-2 text-red-300">
+          <Trash2 className="h-4 w-4" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminMenuPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [items, setItems] = useState<MenuItem[]>([]);
@@ -137,6 +271,8 @@ export default function AdminMenuPage() {
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [categoryForm, setCategoryForm] = useState<CategoryFormState>(emptyCategoryForm);
   const [itemForm, setItemForm] = useState<ItemFormState>(emptyItemForm);
+
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
 
   const categoryFormRef = useRef<HTMLDivElement>(null);
   const itemFormRef = useRef<HTMLDivElement>(null);
@@ -160,6 +296,48 @@ export default function AdminMenuPage() {
   // ── All hooks must be called before any early return ──
   // Use getSortedCategories to sync with localStorage before using
   const sortedCategories = useMemo(() => getSortedCategories(categories), [categories]);
+
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150,
+        tolerance: 5,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveDragId(event.active.id as string);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveDragId(null);
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = sortedCategories.findIndex((c) => c.id === active.id);
+      const newIndex = sortedCategories.findIndex((c) => c.id === over.id);
+
+      const moved = arrayMove(sortedCategories, oldIndex, newIndex);
+      const newOrdered = reassignCategoryOrder(moved);
+
+      saveCategories(newOrdered);
+      
+      const updatedCategoriesMap = new Map(newOrdered.map(c => [c.id, c]));
+      const nextCategories = categories.map(c => updatedCategoriesMap.get(c.id) || c);
+      persistCatalog(nextCategories, items);
+
+      toast.success("Category order updated", {
+        className: "border-l-4 border-l-[#FBA919]",
+        style: { borderColor: "#FBA919" }
+      });
+    }
+  };
 
   const groupedItems = useMemo(
     () =>
@@ -318,10 +496,12 @@ export default function AdminMenuPage() {
   const confirmDeleteCategory = () => {
     if (!categoryToDelete) return;
 
-    persistCatalog(
-      categories.filter((entry) => entry.id !== categoryToDelete.id),
-      items
-    );
+    const remaining = categories.filter((entry) => entry.id !== categoryToDelete.id);
+    const nextCategories = reorderAfterDelete(remaining);
+    saveCategories(nextCategories);
+    
+    persistCatalog(nextCategories, items);
+
     if (editingCategoryId === categoryToDelete.id) {
       resetCategoryForm();
     }
@@ -453,56 +633,42 @@ export default function AdminMenuPage() {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <h3 className="text-lg font-semibold text-white">Category List</h3>
             <div className="mt-4 space-y-3">
-              {categories.map((category) => {
-                const count = items.filter((item) => item.category === category.id).length;
-
-                return (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 overflow-hidden rounded-lg border border-white/10 bg-black/20">
-                        {category.image ? (
-                          <img src={category.image} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20">NO IMG</div>
-                        )}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-white">
-                          {category.name}
-                        </p>
-                        <p className="mt-1 text-xs text-white/50">
-                          {category.id} • {count} items
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={sortedCategories.map((c) => c.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {sortedCategories.map((category) => {
+                    const count = items.filter((item) => item.category === category.id).length;
+                    return (
+                      <SortableCategoryRow
+                        key={category.id}
+                        category={category}
+                        count={count}
+                        onEdit={() => {
                           setEditingCategoryId(category.id);
                           setCategoryForm(toCategoryForm(category));
                           categoryFormRef.current?.scrollIntoView({ behavior: "smooth" });
                         }}
-                        className="rounded-full border border-white/10 bg-white/5 p-2 text-white/75 transition-colors hover:border-primary/30 hover:text-primary"
-                        aria-label={`Edit ${category.name}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteCategory(category)}
-                        className="rounded-full border border-red-400/30 bg-red-500/10 p-2 text-red-300 transition-colors hover:bg-red-500/20"
-                        aria-label={`Delete ${category.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+                        onDelete={() => handleDeleteCategory(category)}
+                      />
+                    );
+                  })}
+                </SortableContext>
+                <DragOverlay>
+                  {activeDragId ? (
+                    <DragOverlayRow
+                      category={sortedCategories.find((c) => c.id === activeDragId)!}
+                      count={items.filter((item) => item.category === activeDragId).length}
+                    />
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </div>
           </div>
         </div>
@@ -667,11 +833,7 @@ export default function AdminMenuPage() {
             </div>
           </div>
           
-          <CategoryOrderManager 
-            categories={categories} 
-            items={items} 
-            onOrderChange={(newCategories) => persistCatalog(newCategories, items)} 
-          />
+
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <h3 className="text-lg font-semibold text-white">Menu Catalog</h3>
