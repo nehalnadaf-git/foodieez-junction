@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { CheckCircle2, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MenuFilter } from "@/hooks/useMenuFilter";
@@ -8,44 +8,15 @@ import type { MenuFilter } from "@/hooks/useMenuFilter";
 interface MenuFilterToggleProps {
   filter: MenuFilter;
   setFilter: (filter: MenuFilter) => void;
-  availableCount: number;
-  totalCount: number;
-  unavailableCount: number;
 }
 
 export const MenuFilterToggle = ({
   filter,
   setFilter,
-  availableCount,
-  totalCount,
-  unavailableCount,
 }: MenuFilterToggleProps) => {
   return (
     <div className="flex flex-col md:flex-row items-center justify-end gap-4 mb-4 mt-2 w-full z-40 relative">
       <div className="flex flex-col sm:flex-row items-center justify-end gap-3 sm:gap-4 w-full">
-        {/* Count Label */}
-        <div className="text-sm font-medium order-2 sm:order-1 relative min-h-[24px] flex items-center justify-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={filter + availableCount}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.15, ease: "easeInOut" }}
-            >
-              {filter === "available" ? (
-                <span className="text-green-500 font-bold tracking-wide">
-                  {availableCount} items available now
-                </span>
-              ) : (
-                <span className="text-white/60 tracking-wide">
-                  {totalCount} items total <span className="mx-1.5 opacity-50">•</span> <span className="text-red-400 font-bold">{unavailableCount} unavailable</span>
-                </span>
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-
         {/* Toggle Button Group */}
         <div
           className={cn(

@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { getSocialLinks } from "@/utils/social";
 
 /**
  * HeroSection Component — migrated to Next.js 16
@@ -10,6 +12,16 @@ import { ArrowUpRight } from "lucide-react";
  * - <img> replaced with next/image <Image> with priority for LCP
  */
 const HeroSection = () => {
+  const [whatsappLink, setWhatsappLink] = useState("https://wa.me/919743862836");
+
+  useEffect(() => {
+    const config = getSocialLinks();
+    const wa = config.links.find((l) => l.platform === "whatsapp");
+    if (wa && wa.url) {
+      setWhatsappLink(wa.url);
+    }
+  }, []);
+
   return (
     <>
       {/* ─────────────────────────────────────────────
@@ -311,7 +323,7 @@ const HeroSection = () => {
               </a>
 
               <a
-                href="https://wa.me/919743862836"
+                href={whatsappLink}
                 target="_blank"
                 rel="noreferrer"
                 className="hero-btn-whatsapp w-full sm:w-auto transition-transform active:scale-95"

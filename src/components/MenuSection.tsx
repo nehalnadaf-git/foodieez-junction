@@ -265,8 +265,6 @@ const MenuSection = () => {
     filterItems,
     filterCategories,
     availableCount,
-    totalCount,
-    unavailableCount,
   } = useMenuFilter(rawMenuItems);
 
   // Apply visual ordering and admin visibility toggles to the raw categories from the catalog
@@ -358,9 +356,6 @@ const MenuSection = () => {
           <MenuFilterToggle
             filter={filter}
             setFilter={setFilter}
-            availableCount={availableCount}
-            totalCount={totalCount}
-            unavailableCount={unavailableCount}
           />
           <div
             className="mx-auto w-fit max-w-full rounded-2xl px-2.5 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide"

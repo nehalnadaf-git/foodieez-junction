@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { getSocialLinks } from "@/utils/social";
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -8,7 +10,18 @@ const WhatsAppIcon = () => (
   </svg>
 );
 
-const ContactSection = () => (
+const ContactSection = () => {
+  const [whatsappLink, setWhatsappLink] = useState("https://wa.me/919743862836");
+
+  useEffect(() => {
+    const config = getSocialLinks();
+    const wa = config.links.find((l) => l.platform === "whatsapp");
+    if (wa && wa.url) {
+      setWhatsappLink(wa.url);
+    }
+  }, []);
+
+  return (
   <section id="contact" className="py-20 md:py-28 relative overflow-hidden">
     <div className="absolute inset-0 pointer-events-none">
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px]
@@ -36,7 +49,7 @@ const ContactSection = () => (
 
         {/* WhatsApp CTA */}
         <motion.a
-          href="https://wa.me/919743862836"
+          href={whatsappLink}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.04 }}
@@ -56,6 +69,7 @@ const ContactSection = () => (
       </motion.div>
     </div>
   </section>
-);
+  );
+};
 
 export default ContactSection;
