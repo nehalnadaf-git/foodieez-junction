@@ -163,27 +163,19 @@ function SortableCategoryRow({ category, count, onEdit, onDelete }: SortableCate
   } = useSortable({ id: category.id });
 
   const style = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
-
-  if (isDragging) {
-    return (
-      <div
-        ref={setNodeRef}
-        style={style}
-        className="flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-amber-400/60 bg-amber-400/10 px-4 py-3 h-[88px] sm:h-[68px]"
-      >
-        <div className="opacity-0 w-full h-full text-sm">Placeholder</div>
-      </div>
-    );
-  }
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={"flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-none touch-none transition-shadow duration-300"}
+      className={
+        isDragging
+          ? "flex items-center justify-between gap-3 rounded-2xl border-2 border-dashed border-amber-400/40 bg-amber-400/5 px-4 py-3 opacity-50 touch-none pointer-events-none"
+          : "flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 shadow-none touch-none transition-shadow duration-300 relative"
+      }
     >
       <div className="flex items-center gap-3">
         <button
