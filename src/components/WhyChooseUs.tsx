@@ -178,7 +178,7 @@ const WhyChooseUs = () => (
               <div className="relative z-10 p-8 flex flex-col gap-6">
 
                 {/* Top row: icon */}
-                <div className="flex items-start justify-end">
+                <div className="flex items-start justify-start">
                   {/* Premium icon badge */}
                   <motion.div
                     whileHover={{ scale: 1.15, rotate: 5 }}
