@@ -3,15 +3,19 @@
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useCart } from "@/context/CartContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { type MenuItem } from "@/data/menuData";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import { UtensilsCrossed } from "lucide-react";
 import { OfferBadge } from "@/components/menu/OfferBadge";
 import { calculateDiscountedPrice, isOfferActive } from "@/utils/offer";
+import { useMenuFilter } from "@/hooks/useMenuFilter";
+import { MenuFilterToggle } from "@/components/menu/MenuFilterToggle";
+import { OutOfStockBadge } from "@/components/menu/OutOfStockBadge";
+import { MenuEmptyState } from "@/components/menu/MenuEmptyState";
 
 /* ─────────────────── Menu Item Card ─────────────────── */
-const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
+const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: number; filterMode: "available" | "all" }) => {
   const { addItem } = useCart();
   const hasSize = !!(item.priceSmall && item.priceLarge);
   const [selectedSize, setSelectedSize] = useState<"small" | "large">("small");
@@ -28,42 +32,51 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
     (item.offer?.type === "percentage_off" || item.offer?.type === "flat_discount");
   const discountedPrice = hasDiscountOffer ? calculateDiscountedPrice(basePrice, item.offer) : basePrice;
   const hasImage = Boolean(item.image && item.image.trim().length > 0 && !imageError);
+  const isOutOfStock = item.available === false;
+  const cardOpacity = isOutOfStock && filterMode === "all" ? 0.6 : 1;
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 28 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-30px" }}
-      transition={{ delay: (index % 6) * 0.055, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+      layout
+      initial={{ opacity: 0, y: 28, scale: 0.95 }}
+      animate={{ opacity: cardOpacity, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
+      transition={{ delay: (index % 6) * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
       className="relative flex flex-col h-full pt-[55px] lg:pt-[78px]"
       style={{ overflow: "visible" }}
     >
+      {isOutOfStock && filterMode === "all" && <OutOfStockBadge />}
       {/* ── Food image (next/image) ── */}
       <div
         className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none select-none"
         style={{ top: -10 }}
       >
-        {hasImage && item.image ? (
-          <Image
-            src={item.image}
-            alt={`${item.name} — Foodieez Junction Hubballi`}
-            width={180}
-            height={180}
-            className="!w-[130px] !h-[130px] max-w-none lg:!w-[160px] lg:!h-[160px] object-contain"
-            style={{
-              filter: "drop-shadow(0 12px 24px rgba(0,0,0,0.35))",
-              transform: item.imageScale ? `scale(${item.imageScale})` : undefined,
-            }}
-            loading="lazy"
-            draggable={false}
-            unoptimized
-            onError={() => setImageError(true)}
-          />
-        ) : (
-          <div className="!w-[130px] !h-[130px] lg:!w-[160px] lg:!h-[160px] rounded-3xl border border-primary/25 bg-[linear-gradient(135deg,rgba(245,166,35,0.2),rgba(255,255,255,0.08))] shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex items-center justify-center">
-            <UtensilsCrossed className="h-10 w-10 text-primary" />
-          </div>
-        )}
+        <div className="relative">
+          {isOutOfStock && filterMode === "all" && (
+            <div className="absolute inset-0 rounded-full bg-black/40 z-20 pointer-events-none" />
+          )}
+          {hasImage && item.image ? (
+            <Image
+              src={item.image}
+              alt={`${item.name} — Foodieez Junction Hubballi`}
+              width={180}
+              height={180}
+              className="!w-[130px] !h-[130px] max-w-none lg:!w-[160px] lg:!h-[160px] object-contain"
+              style={{
+                filter: "drop-shadow(0 12px 24px rgba(0,0,0,0.35))",
+                transform: item.imageScale ? `scale(${item.imageScale})` : undefined,
+              }}
+              loading="lazy"
+              draggable={false}
+              unoptimized
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <div className="!w-[130px] !h-[130px] lg:!w-[160px] lg:!h-[160px] rounded-3xl border border-primary/25 bg-[linear-gradient(135deg,rgba(245,166,35,0.2),rgba(255,255,255,0.08))] shadow-[0_10px_30px_rgba(0,0,0,0.25)] flex items-center justify-center">
+              <UtensilsCrossed className="h-10 w-10 text-primary" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* ── Glass card ── */}
@@ -176,7 +189,8 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
           <div style={{ marginTop: "auto" }}>
             <button
               onClick={() => addItem(item, hasSize ? selectedSize : "single")}
-              disabled={item.available === false}
+              disabled={isOutOfStock}
+              title={isOutOfStock ? "Currently unavailable" : ""}
               style={{
                 width: "100%",
                 display: "flex",
@@ -190,29 +204,33 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
                 color: "#FFFFFF",
                 fontSize: 13,
                 fontWeight: 600,
-                cursor: "pointer",
+                cursor: isOutOfStock ? "not-allowed" : "pointer",
                 transition: "background 0.15s ease, transform 0.15s ease",
-                opacity: item.available === false ? 0.5 : 1,
+                opacity: isOutOfStock ? 0.5 : 1,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.28)";
+                if (!isOutOfStock) e.currentTarget.style.background = "rgba(255,255,255,0.28)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                if (!isOutOfStock) e.currentTarget.style.background = "rgba(255,255,255,0.15)";
               }}
               onMouseDown={(e) => {
-                e.currentTarget.style.transform = "scale(0.97)";
+                if (!isOutOfStock) e.currentTarget.style.transform = "scale(0.97)";
               }}
               onMouseUp={(e) => {
-                e.currentTarget.style.transform = "scale(1)";
+                if (!isOutOfStock) e.currentTarget.style.transform = "scale(1)";
               }}
               onTouchStart={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.28)";
-                e.currentTarget.style.transform = "scale(0.97)";
+                if (!isOutOfStock) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.28)";
+                  e.currentTarget.style.transform = "scale(0.97)";
+                }
               }}
               onTouchEnd={(e) => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-                e.currentTarget.style.transform = "scale(1)";
+                if (!isOutOfStock) {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                  e.currentTarget.style.transform = "scale(1)";
+                }
               }}
             >
               <svg
@@ -229,7 +247,7 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
                 <circle cx="20" cy="21" r="1" />
                 <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
               </svg>
-              {item.available === false ? "Unavailable" : "Add To Cart"}
+              {isOutOfStock ? "Unavailable" : "Add To Cart"}
             </button>
           </div>
         </div>
@@ -240,18 +258,29 @@ const MenuItemCard = ({ item, index }: { item: MenuItem; index: number }) => {
 
 /* ─────────────────── Menu Section ─────────────────── */
 const MenuSection = () => {
-  const { categories, menuItems } = useMenuCatalog();
+  const { categories: rawCategories, menuItems: rawMenuItems } = useMenuCatalog();
+  const {
+    filter,
+    setFilter,
+    filterItems,
+    filterCategories,
+    availableCount,
+    totalCount,
+    unavailableCount,
+  } = useMenuFilter(rawMenuItems);
+
+  const displayedCategories = filterCategories(rawCategories);
   const [activeCategory, setActiveCategory] = useState("");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
-    if (categories.length > 0 && !activeCategory) {
-      setActiveCategory(categories[0].id);
+    if (displayedCategories.length > 0 && !activeCategory) {
+      setActiveCategory(displayedCategories[0].id);
     }
-  }, [activeCategory, categories]);
+  }, [activeCategory, displayedCategories]);
 
   useEffect(() => {
-    if (categories.length === 0) {
+    if (displayedCategories.length === 0) {
       return;
     }
 
@@ -268,7 +297,7 @@ const MenuSection = () => {
       if (el) observer.observe(el);
     });
     return () => observer.disconnect();
-  }, [categories]);
+  }, [displayedCategories]);
 
   return (
     <section id="menu" className="relative" style={{ padding: "80px 0", overflow: "visible" }}>
@@ -323,7 +352,14 @@ const MenuSection = () => {
         </motion.div>
 
         {/* Category filter bar (Non-sticky) */}
-        <div className="relative z-30 py-3">
+        <div className="relative z-30 py-3 flex flex-col items-center">
+          <MenuFilterToggle
+            filter={filter}
+            setFilter={setFilter}
+            availableCount={availableCount}
+            totalCount={totalCount}
+            unavailableCount={unavailableCount}
+          />
           <div
             className="mx-auto w-fit max-w-full rounded-2xl px-2.5 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide"
             style={{
@@ -334,7 +370,7 @@ const MenuSection = () => {
               boxShadow: "0 4px 24px rgba(0,0,0,0.25)",
             }}
           >
-            {categories.map((cat) => (
+            {displayedCategories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() =>
@@ -360,77 +396,90 @@ const MenuSection = () => {
         </div>
 
         {/* Menu categories */}
-        <div className="mt-10 flex flex-col gap-20">
-          {categories.map((cat) => {
-            const items = menuItems.filter((m) => m.category === cat.id);
-            if (items.length === 0) return null;
-            return (
-              <div
-                key={cat.id}
-                id={`cat-${cat.id}`}
-                ref={(el) => {
-                  sectionRefs.current[cat.id] = el;
-                }}
-                style={{ scrollMarginTop: 140, overflow: "visible" }}
-              >
-                {/* Category header */}
-                <div className="flex items-center gap-4 mb-5 lg:mb-12">
-                  <h3
-                    className="font-display font-bold text-3xl md:text-4xl tracking-tight"
-                    style={{ color: "#fff", margin: 0 }}
-                  >
-                    {cat.name}
-                  </h3>
-                  <div
-                    style={{
-                      flex: 1,
-                      height: 1,
-                      background: "rgba(255,255,255,0.15)",
+        <div className="mt-6 flex flex-col gap-20" style={{ overflow: "hidden" }}>
+          <AnimatePresence mode="popLayout">
+            {displayedCategories.length === 0 && availableCount === 0 && rawMenuItems.length > 0 ? (
+              <MenuEmptyState key="menu-empty-state" setFilter={setFilter} />
+            ) : (
+              displayedCategories.map((cat) => {
+                const items = filterItems(rawMenuItems.filter((m) => m.category === cat.id));
+                if (items.length === 0) return null;
+                return (
+                  <motion.div
+                    layout
+                    key={cat.id}
+                    id={`cat-${cat.id}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    ref={(el) => {
+                      sectionRefs.current[cat.id] = el;
                     }}
-                  />
-                  <span
-                    className="font-accent font-semibold tracking-widest uppercase hidden sm:block"
-                    style={{
-                      fontSize: 11,
-                      color: "rgba(255,255,255,0.50)",
-                      padding: "4px 12px",
-                      borderRadius: 999,
-                      background: "rgba(255,255,255,0.08)",
-                    }}
+                    style={{ scrollMarginTop: 140, overflow: "visible" }}
                   >
-                    {items.length} items
-                  </span>
-                </div>
+                    {/* Category header */}
+                    <div className="flex items-center gap-4 mb-5 lg:mb-12">
+                      <h3
+                        className="font-display font-bold text-3xl md:text-4xl tracking-tight"
+                        style={{ color: "#fff", margin: 0 }}
+                      >
+                        {cat.name}
+                      </h3>
+                      <div
+                        style={{
+                          flex: 1,
+                          height: 1,
+                          background: "rgba(255,255,255,0.15)",
+                        }}
+                      />
+                      <span
+                        className="font-accent font-semibold tracking-widest uppercase hidden sm:block"
+                        style={{
+                          fontSize: 11,
+                          color: "rgba(255,255,255,0.50)",
+                          padding: "4px 12px",
+                          borderRadius: 999,
+                          background: "rgba(255,255,255,0.08)",
+                        }}
+                      >
+                        {items.length} items
+                      </span>
+                    </div>
 
-                <div
-                  className="grid grid-cols-2 lg:grid-cols-4
-                             gap-x-[14px] gap-y-[70px]
-                             lg:gap-8
-                             pt-[45px] px-1 pb-2
-                             lg:pt-10 lg:px-0 lg:pb-0"
-                  style={{ overflow: "visible", alignItems: "stretch" }}
-                >
-                  {menuItems.length === 0 ? (
-                    /* Skeleton Card */
-                    Array.from({ length: 4 }).map((_, i) => (
-                      <div key={`menu-skeleton-${cat.id}-${i}`} className="relative pt-[55px] animate-pulse">
-                         <div className="absolute left-1/2 -translate-x-1/2 top-[-10px] w-[130px] h-[130px] rounded-full bg-white/5 border border-white/10 z-10" />
-                         <div className="glass h-[220px] rounded-[22px] flex flex-col p-4 pt-[80px] gap-3">
-                            <div className="h-4 w-3/4 bg-white/5 rounded" />
-                            <div className="h-8 w-1/2 bg-white/5 rounded-full mt-2" />
-                            <div className="mt-auto h-10 w-full bg-white/5 rounded-xl" />
-                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    items.map((item, i) => (
-                      <MenuItemCard key={item.id} item={item} index={i} />
-                    ))
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                    <motion.div
+                      layout
+                      className="grid grid-cols-2 lg:grid-cols-4
+                                 gap-x-[14px] gap-y-[70px]
+                                 lg:gap-8
+                                 pt-[45px] px-1 pb-2
+                                 lg:pt-10 lg:px-0 lg:pb-0"
+                      style={{ overflow: "visible", alignItems: "stretch" }}
+                    >
+                      <AnimatePresence mode="popLayout">
+                        {rawMenuItems.length === 0 ? (
+                          /* Skeleton Card */
+                          Array.from({ length: 4 }).map((_, i) => (
+                            <motion.div layout key={`menu-skeleton-${cat.id}-${i}`} className="relative pt-[55px] animate-pulse">
+                               <div className="absolute left-1/2 -translate-x-1/2 top-[-10px] w-[130px] h-[130px] rounded-full bg-white/5 border border-white/10 z-10" />
+                               <div className="glass h-[220px] rounded-[22px] flex flex-col p-4 pt-[80px] gap-3">
+                                  <div className="h-4 w-3/4 bg-white/5 rounded" />
+                                  <div className="h-8 w-1/2 bg-white/5 rounded-full mt-2" />
+                                  <div className="mt-auto h-10 w-full bg-white/5 rounded-xl" />
+                               </div>
+                            </motion.div>
+                          ))
+                        ) : (
+                          items.map((item, i) => (
+                            <MenuItemCard key={item.id} item={item} index={i} filterMode={filter} />
+                          ))
+                        )}
+                      </AnimatePresence>
+                    </motion.div>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </section>

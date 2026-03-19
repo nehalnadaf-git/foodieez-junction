@@ -17,6 +17,7 @@ import {
   BellRing,
   Menu,
   X,
+  PackageCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/orders", label: "Live Orders", icon: BellRing },
   { href: "/admin/order-settings", label: "Order Settings", icon: Settings },
+  { href: "/admin/availability", label: "Availability", icon: PackageCheck },
   { href: "/admin/menu", label: "Menu Management", icon: UtensilsCrossed },
   { href: "/admin/tables", label: "Table Management", icon: QrCode },
   { href: "/admin/upi", label: "UPI Management", icon: CreditCard },

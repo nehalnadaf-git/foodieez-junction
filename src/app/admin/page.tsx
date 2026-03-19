@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { AlertTriangle, Tag } from "lucide-react";
+import { AlertTriangle, Tag, CheckCircle2, XCircle, LayoutGrid } from "lucide-react";
 import { useOperatingHours } from "@/hooks/useOperatingHours";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
+import { useAvailability } from "@/hooks/useAvailability";
 import { isOfferActive } from "@/utils/offer";
 
 const statCardClass =
@@ -15,6 +16,7 @@ export default function AdminDashboardPage() {
   const { isOpen } = useOperatingHours();
   const { settings } = useAppSettings();
   const { menuItems } = useMenuCatalog();
+  const { availableCount, unavailableCount, totalCount, availabilityPercentage } = useAvailability();
 
   const activeOfferItems = menuItems.filter((item) => item.offer && isOfferActive(item.offer));
   const expiringSoonItems = activeOfferItems
@@ -99,6 +101,46 @@ export default function AdminDashboardPage() {
           ))}
         </div>
       )}
+
+      {/* Menu Availability Stat Card */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-5 lg:p-6 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
+        <h3 className="text-lg font-bold text-white mb-5">Menu Availability</h3>
+        
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <div className="flex flex-col items-center">
+             <CheckCircle2 className="h-6 w-6 text-green-400 mb-2" />
+             <p className="text-xl font-bold text-green-400">{availableCount}</p>
+             <p className="text-xs text-white/60">Available</p>
+          </div>
+          <div className="flex flex-col items-center border-x border-white/10">
+             <XCircle className="h-6 w-6 text-red-500 mb-2" />
+             <p className="text-xl font-bold text-red-500">{unavailableCount}</p>
+             <p className="text-xs text-white/60">Out of Stock</p>
+          </div>
+          <div className="flex flex-col items-center">
+             <LayoutGrid className="h-6 w-6 text-white/80 mb-2" />
+             <p className="text-xl font-bold text-white/80">{totalCount}</p>
+             <p className="text-xs text-white/60">Total</p>
+          </div>
+        </div>
+
+        <div className="w-full h-1.5 bg-white/10 rounded-full mb-2 overflow-hidden">
+           <div 
+             className="h-full bg-[#FBA919] rounded-full transition-all duration-500 ease-in-out" 
+             style={{ width: `${availabilityPercentage}%` }} 
+           />
+        </div>
+        <p className="text-xs font-semibold text-[#FBA919] text-right mb-5">
+           {availabilityPercentage}% available
+        </p>
+
+        <Link
+           href="/admin/availability"
+           className="w-full flex items-center justify-center py-2.5 rounded-xl bg-[#FBA919]/10 border border-[#FBA919]/20 text-[#FBA919] font-bold text-sm tracking-wide transition-all hover:bg-[#FBA919]/20"
+        >
+           Manage Availability
+        </Link>
+      </div>
 
       <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         <h3 className="text-lg font-semibold text-white">Quick Actions</h3>
