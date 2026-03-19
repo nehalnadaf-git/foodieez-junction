@@ -38,14 +38,18 @@ export interface MenuItem {
   /** Path to individual product image inside /public (e.g. "/Products/Chicken/Chicken 65.png") */
   image?: string;
   imageSource?: "upload" | "url";
-  imageScale?: number;
+
 }
 
 export interface Category {
   id: string;
   name: string;
   image: string;
+  visible?: boolean;
+  order?: number;
 }
+
+export type MenuCategory = Category;
 
 export const categories: Category[] = [
   { id: "veg", name: "Veg Items", image: "/Products/Veg items/Veg Fried Rice.png?v=2" },

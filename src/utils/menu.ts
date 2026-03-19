@@ -59,7 +59,6 @@ function sanitizeMenuItem(item: MenuItem): MenuItem {
     priceLarge: item.priceLarge,
     image: item.image,
     imageSource: item.imageSource,
-    imageScale: item.imageScale,
   };
 }
 

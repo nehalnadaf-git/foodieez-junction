@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart, getItemPrice } from "@/context/CartContext";
 import { AnimatePresence, motion } from "framer-motion";
-import { useOperatingHours } from "@/hooks/useOperatingHours";
+import { useRestaurantStatus } from "@/hooks/useRestaurantStatus";
 import { useAppSettings } from "@/context/AppSettingsContext";
 
 const CartDrawer = () => {
@@ -21,7 +21,7 @@ const CartDrawer = () => {
     remainingForMinimum,
     meetsMinimumOrder,
   } = useCart();
-  const { isOpen } = useOperatingHours();
+  const { isOpen } = useRestaurantStatus();
   const { settings } = useAppSettings();
   const canPlaceOrder = totalItems > 0 && isOpen;
 
@@ -244,16 +244,9 @@ const CartDrawer = () => {
                       border: "1px solid rgba(239,68,68,0.3)",
                     }}
                   >
-                    <p className="text-sm font-semibold text-red-400">
-                      We&apos;re currently closed. Opens at{" "}
-                      {(() => {
-                        const [hh, mm] = settings.order.openTimeIst.split(":");
-                        const h = parseInt(hh, 10);
-                        const suffix = h >= 12 ? "PM" : "AM";
-                        const h12 = h % 12 || 12;
-                        return `${h12}:${mm} ${suffix}`;
-                      })()}{" "}
-                      today!
+                    <p className="text-sm font-semibold text-red-500 text-center">
+                      Ordering is currently unavailable.
+                      <br className="md:hidden" /> We are closed right now.
                     </p>
                   </div>
                 )}
@@ -275,6 +268,7 @@ const CartDrawer = () => {
 
                 {/* Place Order CTA */}
                 <button
+                  title={!isOpen ? "We are currently closed" : ""}
                   onClick={() => {
                     if (!canPlaceOrder) return;
                     setIsCartOpen(false);

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useCart } from "@/context/CartContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { type MenuItem } from "@/data/menuData";
@@ -13,6 +13,7 @@ import { useMenuFilter } from "@/hooks/useMenuFilter";
 import { MenuFilterToggle } from "@/components/menu/MenuFilterToggle";
 import { OutOfStockBadge } from "@/components/menu/OutOfStockBadge";
 import { MenuEmptyState } from "@/components/menu/MenuEmptyState";
+import { getVisibleSortedCategories } from "@/utils/categoryOrder";
 
 /* ─────────────────── Menu Item Card ─────────────────── */
 const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: number; filterMode: "available" | "all" }) => {
@@ -64,7 +65,6 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
               className="!w-[130px] !h-[130px] max-w-none lg:!w-[160px] lg:!h-[160px] object-contain"
               style={{
                 filter: "drop-shadow(0 12px 24px rgba(0,0,0,0.35))",
-                transform: item.imageScale ? `scale(${item.imageScale})` : undefined,
               }}
               loading="lazy"
               draggable={false}
@@ -269,7 +269,9 @@ const MenuSection = () => {
     unavailableCount,
   } = useMenuFilter(rawMenuItems);
 
-  const displayedCategories = filterCategories(rawCategories);
+  // Apply visual ordering and admin visibility toggles to the raw categories from the catalog
+  const visibleSortedCategories = useMemo(() => getVisibleSortedCategories(rawCategories), [rawCategories]);
+  const displayedCategories = filterCategories(visibleSortedCategories);
   const [activeCategory, setActiveCategory] = useState("");
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 

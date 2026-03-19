@@ -16,6 +16,8 @@ import { api } from "../../../../convex/_generated/api";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ImageUploader } from "@/components/admin/menu/ImageUploader";
 import { OfferEditor } from "@/components/admin/offers/OfferEditor";
+import { CategoryOrderManager } from "@/components/admin/menu/CategoryOrderManager";
+import { getSortedCategories } from "@/utils/categoryOrder";
 import { getOfferLabel } from "@/utils/offer";
 import {
   AlertDialog,
@@ -49,7 +51,6 @@ interface ItemFormState {
   price: string;
   priceSmall: string;
   priceLarge: string;
-  imageScale: string;
   offer?: ItemOffer;
 }
 
@@ -74,7 +75,6 @@ const emptyItemForm: ItemFormState = {
   price: "",
   priceSmall: "",
   priceLarge: "",
-  imageScale: "",
   offer: undefined,
 };
 
@@ -124,7 +124,6 @@ function toItemForm(item: MenuItem): ItemFormState {
     price: item.price?.toString() ?? "",
     priceSmall: item.priceSmall?.toString() ?? "",
     priceLarge: item.priceLarge?.toString() ?? "",
-    imageScale: item.imageScale?.toString() ?? "",
     offer: item.offer,
   };
 }
@@ -159,20 +158,23 @@ export default function AdminMenuPage() {
   }, [catalog, isLoaded]);
 
   // ── All hooks must be called before any early return ──
+  // Use getSortedCategories to sync with localStorage before using
+  const sortedCategories = useMemo(() => getSortedCategories(categories), [categories]);
+
   const groupedItems = useMemo(
     () =>
-      categories.map((category) => ({
+      sortedCategories.map((category) => ({
         category,
         items: items.filter((item) => item.category === category.id),
       })),
-    [categories, items]
+    [sortedCategories, items]
   );
 
   useEffect(() => {
-    if (categories.length > 0 && !itemForm.category) {
-      setItemForm((current) => ({ ...current, category: categories[0].id }));
+    if (sortedCategories.length > 0 && !itemForm.category) {
+      setItemForm((current) => ({ ...current, category: sortedCategories[0].id }));
     }
-  }, [categories, itemForm.category]);
+  }, [sortedCategories, itemForm.category]);
 
   if (!isLoaded) {
     return (
@@ -268,8 +270,6 @@ export default function AdminMenuPage() {
     const price = itemForm.priceMode === "single" ? Number(itemForm.price) : undefined;
     const priceSmall = itemForm.priceMode === "split" ? Number(itemForm.priceSmall) : undefined;
     const priceLarge = itemForm.priceMode === "split" ? Number(itemForm.priceLarge) : undefined;
-    const imageScale = itemForm.imageScale ? Number(itemForm.imageScale) : undefined;
-
     if (
       (itemForm.priceMode === "single" && (!price || Number.isNaN(price) || price <= 0)) ||
       (itemForm.priceMode === "split" &&
@@ -293,7 +293,6 @@ export default function AdminMenuPage() {
       price: itemForm.priceMode === "single" ? price : undefined,
       priceSmall: itemForm.priceMode === "split" ? priceSmall : undefined,
       priceLarge: itemForm.priceMode === "split" ? priceLarge : undefined,
-      imageScale: imageScale && !Number.isNaN(imageScale) ? imageScale : undefined,
       sizes: (items.find(i => i.id === editingItemId) || {}).sizes,
     };
 
@@ -627,16 +626,6 @@ export default function AdminMenuPage() {
               )}
 
               <div>
-                <label className="mb-1 block text-xs uppercase tracking-[0.22em] text-white/50">Image Scale</label>
-                <input
-                  value={itemForm.imageScale}
-                  onChange={(event) => setItemForm((current) => ({ ...current, imageScale: event.target.value }))}
-                  className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/40"
-                  placeholder="Optional, e.g. 1.12"
-                />
-              </div>
-
-              <div>
                 <label className="mb-1 block text-xs uppercase tracking-[0.22em] text-white/50">Description</label>
                 <textarea
                   value={itemForm.description}
@@ -677,6 +666,12 @@ export default function AdminMenuPage() {
               </button>
             </div>
           </div>
+          
+          <CategoryOrderManager 
+            categories={categories} 
+            items={items} 
+            onOrderChange={(newCategories) => persistCatalog(newCategories, items)} 
+          />
 
           <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
             <h3 className="text-lg font-semibold text-white">Menu Catalog</h3>
@@ -707,7 +702,6 @@ export default function AdminMenuPage() {
                                     src={item.image} 
                                     alt="" 
                                     className="h-full w-full object-cover" 
-                                    style={{ transform: item.imageScale ? `scale(${item.imageScale})` : undefined }}
                                   />
                                 ) : (
                                   <div className="flex h-full w-full items-center justify-center text-[10px] text-white/20 uppercase">No Img</div>

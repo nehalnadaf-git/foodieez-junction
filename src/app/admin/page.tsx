@@ -3,17 +3,16 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { AlertTriangle, Tag, CheckCircle2, XCircle, LayoutGrid } from "lucide-react";
-import { useOperatingHours } from "@/hooks/useOperatingHours";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import { useAvailability } from "@/hooks/useAvailability";
 import { isOfferActive } from "@/utils/offer";
+import { RestaurantStatusCard } from "@/components/admin/dashboard/RestaurantStatusCard";
 
 const statCardClass =
   "rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]";
 
 export default function AdminDashboardPage() {
-  const { isOpen } = useOperatingHours();
   const { settings } = useAppSettings();
   const { menuItems } = useMenuCatalog();
   const { availableCount, unavailableCount, totalCount, availabilityPercentage } = useAvailability();
@@ -51,19 +50,9 @@ export default function AdminDashboardPage() {
         Dashboard
       </h2>
 
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-5">
-        <article className={statCardClass}>
-          <p className="text-xs uppercase tracking-wider text-white/60">Restaurant Status</p>
-          <p className={`mt-2 text-xl font-semibold ${isOpen ? "text-green-400" : "text-red-400"}`}>
-            {isOpen ? "Open" : "Closed"}
-          </p>
-          <p className="mt-1 text-sm text-white/60">
-            {settings.order.openTimeIst} - {settings.order.closeTimeIst} IST
-          </p>
-        </article>
+      <RestaurantStatusCard />
 
-
-
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         <article className={statCardClass}>
           <p className="text-xs uppercase tracking-wider text-white/60">Max Per Item</p>
           <p className="mt-2 text-xl font-semibold text-primary">{settings.order.maxQuantityPerItem}</p>

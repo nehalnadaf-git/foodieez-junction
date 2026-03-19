@@ -92,18 +92,20 @@ export function ImageUploader({ image, imageSource, onChange }: ImageUploaderPro
       <p className="text-xs uppercase tracking-[0.2em] text-white/50">Product Image</p>
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as "upload" | "url")} className="mt-4">
-        <TabsList className="grid w-full grid-cols-2 rounded-xl border border-white/10 bg-white/5">
+        <TabsList className="flex flex-col sm:grid w-full sm:grid-cols-2 h-auto gap-1 sm:gap-0 rounded-xl border border-white/10 bg-white/5 p-1">
           <TabsTrigger
             value="upload"
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black"
+            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-black"
           >
-            Upload from Device
+            <UploadCloud className="h-4 w-4" />
+            <span>Upload Device</span>
           </TabsTrigger>
           <TabsTrigger
             value="url"
-            className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-black"
+            className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-xs sm:text-sm data-[state=active]:bg-primary data-[state=active]:text-black"
           >
-            Paste Image URL
+            <LinkIcon className="h-4 w-4" />
+            <span>Paste URL</span>
           </TabsTrigger>
         </TabsList>
 
