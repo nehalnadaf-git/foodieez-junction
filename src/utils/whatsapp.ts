@@ -36,22 +36,22 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
 
   const orderTypeLine =
     input.orderType === "dine-in"
-      ? `🍽️ Dine-In — Table ${input.tableNumber ?? "-"}`
+      ? `Dine-In — Table ${input.tableNumber ?? "-"}`
       : input.scannedTableNumber
-        ? `🛵 Takeaway (Scanned at Table ${input.scannedTableNumber})`
-        : "🛵 Takeaway";
+        ? `Takeaway (Scanned at Table ${input.scannedTableNumber})`
+        : "Takeaway";
 
-  const paymentLine = `💳 Payment: ${input.paymentMethod === "cash" ? "Cash" : "UPI"}`;
+  const paymentLine = `Payment: ${input.paymentMethod === "cash" ? "Cash" : "UPI"}`;
 
   const upiLink = `upi://pay?pa=${encodeURIComponent(input.upiId)}&pn=${encodeURIComponent(input.restaurantName)}&am=${input.totalAmount}&cu=INR&tn=${encodeURIComponent(`Order ${input.orderId}`)}`;
 
   const specialInstructionsLine =
     input.specialInstructions && input.specialInstructions.trim().length > 0
-      ? `\n📝 Special Instructions: ${input.specialInstructions.trim()}`
+      ? `\nSpecial Instructions: ${input.specialInstructions.trim()}`
       : "";
 
   const lines = [
-    `Hi! I'd like to place an order at ${input.restaurantName} 🍽️`,
+    `Hi! I'd like to place an order at ${input.restaurantName}`,
     `Order ID: ${input.orderId}`,
     "",
     "*Order Details:*",
@@ -60,13 +60,13 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
     `*Total: ₹${input.totalAmount}*`,
     "",
     orderTypeLine,
-    `👤 Name: ${input.customerName}`,
+    `Name: ${input.customerName}`,
     paymentLine,
   ];
 
   if (input.paymentMethod === "upi") {
     lines.push("");
-    lines.push(`💰 Pay here: ${upiLink}`);
+    lines.push(`Pay here: ${upiLink}`);
   }
 
   if (specialInstructionsLine.length > 0) {
@@ -74,7 +74,7 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
   }
 
   lines.push("");
-  lines.push(`⏱️ Estimated Time: ${input.estimatedTime}`);
+  lines.push(`Estimated Time: ${input.estimatedTime}`);
   lines.push("Thank you!");
 
   return lines.join("\n");

@@ -114,5 +114,5 @@ export function formatOfferForWhatsApp(
     return `• ${itemName} x${qty} — ₹${discounted} (${label}, was ₹${originalPrice})`;
   }
 
-  return `• ${itemName} x${qty} — ₹${originalPrice} (${label} 🎉)`;
+  return `• ${itemName} x${qty} — ₹${originalPrice} (${label})`;
 }

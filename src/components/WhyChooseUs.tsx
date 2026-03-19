@@ -87,21 +87,18 @@ const ShieldIcon = () => (
 const features = [
   {
     Icon: FlameIcon,
-    num: "01",
     title: "Always Fresh",
     desc: "Cooked fresh on every single order — no reheating, no shortcuts. You taste the difference the moment it hits your plate.",
     tag: "Zero Reheating",
   },
   {
     Icon: LeafIcon,
-    num: "02",
     title: "Authentic Spice",
     desc: "Real street-style flavors, bold and honest. The true taste of Hubballi, served hot with every order crafted from scratch.",
     tag: "True Street Flavor",
   },
   {
     Icon: ShieldIcon,
-    num: "03",
     title: "Hygienic Kitchen",
     desc: "Clean cooking, certified ingredients, handled with care from station to plate. Your health comes first, always.",
     tag: "Food Safety First",
@@ -180,15 +177,8 @@ const WhyChooseUs = () => (
 
               <div className="relative z-10 p-8 flex flex-col gap-6">
 
-                {/* Top row: number + icon */}
-                <div className="flex items-start justify-between">
-                  <span
-                    className="font-display text-6xl font-bold leading-none select-none"
-                    style={{ color: "hsl(var(--primary)/0.10)" }}
-                  >
-                    {f.num}
-                  </span>
-
+                {/* Top row: icon */}
+                <div className="flex items-start justify-end">
                   {/* Premium icon badge */}
                   <motion.div
                     whileHover={{ scale: 1.15, rotate: 5 }}
