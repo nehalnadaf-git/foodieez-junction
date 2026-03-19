@@ -40,6 +40,7 @@ export function ProductRow({ item, stagedItem, onToggle }: ProductRowProps) {
               fill
               className="object-cover"
               sizes="40px"
+              unoptimized
             />
           ) : (
             <UtensilsCrossed className="w-5 h-5 text-white/20" />
