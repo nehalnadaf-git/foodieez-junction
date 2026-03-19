@@ -38,7 +38,7 @@ export function SocialIcons() {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <p className="text-[11px] font-accent uppercase tracking-[0.22em] text-white/60 dark:text-white/60 text-foreground/60">
+      <p className="text-[11px] font-accent uppercase tracking-[0.22em] text-muted-foreground/80">
         Follow Us
       </p>
 
@@ -56,9 +56,9 @@ export function SocialIcons() {
             whileHover={{ scale: 1.1 }}
             className={cn(
               "flex h-11 w-11 items-center justify-center rounded-full",
-              "border border-white/10 bg-white/5 backdrop-blur-xl",
-              "text-white/70 transition-all duration-200",
-              "hover:text-primary hover:shadow-[0_0_16px_rgba(245,166,35,0.35)]",
+              "border border-foreground/10 bg-foreground/5 backdrop-blur-xl",
+              "text-foreground/70 transition-all duration-200",
+              "hover:text-primary hover:border-primary/30 hover:bg-primary/5 hover:shadow-[0_0_16px_rgba(245,166,35,0.25)]",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             )}
           >
