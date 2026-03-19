@@ -88,12 +88,9 @@ const Footer = () => (
         </div>
 
         {/* Bottom bar */}
-        <div className="pt-8 border-t border-primary/8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="pt-8 border-t border-primary/8 flex flex-col sm:flex-row items-center justify-center gap-3 text-center">
           <p className="text-xs text-muted-foreground/55 font-body">
             © {new Date().getFullYear()} Foodieez Junction. All Rights Reserved.
-          </p>
-          <p className="text-xs text-muted-foreground/45 font-body">
-            Crafted with ♥ in Hubballi, Karnataka
           </p>
         </div>
       </div>
