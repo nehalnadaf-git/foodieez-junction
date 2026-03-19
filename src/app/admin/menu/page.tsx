@@ -294,8 +294,24 @@ export default function AdminMenuPage() {
   }, [catalog, isLoaded]);
 
   // ── All hooks must be called before any early return ──
-  // Use getSortedCategories to sync with localStorage before using
-  const sortedCategories = useMemo(() => getSortedCategories(categories), [categories]);
+  const [localSortedCategories, setLocalSortedCategories] = useState<Category[]>([]);
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    
+    if (!hasUnsavedOrder) {
+      setLocalSortedCategories(getSortedCategories(categories));
+    } else {
+      setLocalSortedCategories(prev => {
+        const catMap = new Map(categories.map(c => [c.id, c]));
+        const updated = prev.map(p => catMap.get(p.id) || p).filter(p => catMap.has(p.id));
+        const prevKeys = new Set(prev.map(p => p.id));
+        const added = categories.filter(c => !prevKeys.has(c.id));
+        return [...updated, ...added] as Category[];
+      });
+    }
+  }, [categories, hasUnsavedOrder]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -320,39 +336,46 @@ export default function AdminMenuPage() {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      const oldIndex = sortedCategories.findIndex((c) => c.id === active.id);
-      const newIndex = sortedCategories.findIndex((c) => c.id === over.id);
+      const oldIndex = localSortedCategories.findIndex((c) => c.id === active.id);
+      const newIndex = localSortedCategories.findIndex((c) => c.id === over.id);
 
-      const moved = arrayMove(sortedCategories, oldIndex, newIndex);
+      const moved = arrayMove(localSortedCategories, oldIndex, newIndex);
       const newOrdered = reassignCategoryOrder(moved);
 
-      saveCategories(newOrdered);
-      
-      const updatedCategoriesMap = new Map(newOrdered.map(c => [c.id, c]));
-      const nextCategories = categories.map(c => updatedCategoriesMap.get(c.id) || c);
-      persistCatalog(nextCategories, items);
-
-      toast.success("Category order updated", {
-        className: "border-l-4 border-l-[#FBA919]",
-        style: { borderColor: "#FBA919" }
-      });
+      setLocalSortedCategories(newOrdered as Category[]);
+      setHasUnsavedOrder(true);
     }
+  };
+
+  const handleSaveOrder = () => {
+    saveCategories(localSortedCategories);
+    
+    const updatedCategoriesMap = new Map(localSortedCategories.map(c => [c.id, c]));
+    const nextCategories = categories.map(c => updatedCategoriesMap.get(c.id) || c);
+    
+    persistCatalog(nextCategories, items);
+    
+    setHasUnsavedOrder(false);
+    toast.success("Category order saved successfully", {
+      className: "border-l-4 border-l-[#FBA919]",
+      style: { borderColor: "#FBA919" }
+    });
   };
 
   const groupedItems = useMemo(
     () =>
-      sortedCategories.map((category) => ({
+      localSortedCategories.map((category) => ({
         category,
         items: items.filter((item) => item.category === category.id),
       })),
-    [sortedCategories, items]
+    [localSortedCategories, items]
   );
 
   useEffect(() => {
-    if (sortedCategories.length > 0 && !itemForm.category) {
-      setItemForm((current) => ({ ...current, category: sortedCategories[0].id }));
+    if (localSortedCategories.length > 0 && !itemForm.category) {
+      setItemForm((current) => ({ ...current, category: localSortedCategories[0].id }));
     }
-  }, [sortedCategories, itemForm.category]);
+  }, [localSortedCategories, itemForm.category]);
 
   if (!isLoaded) {
     return (
@@ -368,9 +391,13 @@ export default function AdminMenuPage() {
     setCategories(nextCategories);
     setItems(nextItems);
     try {
-      await saveCatalog({ categories: nextCategories, items: nextItems });
+      const storableCategories = nextCategories.map((c: any) => {
+        const { order, visible, ...rest } = c;
+        return rest;
+      });
+      await saveCatalog({ categories: storableCategories as any, items: nextItems });
     } catch (err) {
-      toast.error("Failed to sync with database");
+      toast.error("Failed to sync with database: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -526,6 +553,10 @@ export default function AdminMenuPage() {
       return;
     }
 
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("fj_menu_categories");
+    }
+
     persistCatalog(defaultCategories, defaultMenuItems);
     resetCategoryForm();
     resetItemForm();
@@ -640,10 +671,10 @@ export default function AdminMenuPage() {
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={sortedCategories.map((c) => c.id)}
+                  items={localSortedCategories.map((c) => c.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  {sortedCategories.map((category) => {
+                  {localSortedCategories.map((category) => {
                     const count = items.filter((item) => item.category === category.id).length;
                     return (
                       <SortableCategoryRow
@@ -663,12 +694,31 @@ export default function AdminMenuPage() {
                 <DragOverlay>
                   {activeDragId ? (
                     <DragOverlayRow
-                      category={sortedCategories.find((c) => c.id === activeDragId)!}
+                      category={localSortedCategories.find((c) => c.id === activeDragId)!}
                       count={items.filter((item) => item.category === activeDragId).length}
                     />
                   ) : null}
                 </DragOverlay>
               </DndContext>
+
+              {hasUnsavedOrder && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }} 
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-xl bg-amber-500/10 border border-amber-500/20 p-4"
+                >
+                  <p className="text-sm text-amber-500/90 font-medium text-center sm:text-left">
+                    You have unsaved order changes
+                  </p>
+                  <button
+                    onClick={handleSaveOrder}
+                    className="inline-flex items-center justify-center gap-2 rounded-full w-full sm:w-auto bg-amber-500 px-6 py-2.5 text-sm font-bold text-black transition-all hover:bg-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.4)]"
+                  >
+                    <Save className="h-4 w-4" />
+                    Save Order
+                  </button>
+                </motion.div>
+              )}
             </div>
           </div>
         </div>

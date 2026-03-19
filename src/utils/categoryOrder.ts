@@ -1,4 +1,4 @@
-import { type MenuCategory } from "@/data/menuData";
+import { type MenuCategory, categories as defaultCategories } from "@/data/menuData";
 
 const STORAGE_KEY = "fj_menu_categories";
 
@@ -99,14 +99,31 @@ export function reassignCategoryOrder(categories: MenuCategory[]): MenuCategory[
 }
 
 /**
- * Resets all categories to default alphabetical order
- * and reassigns order values accordingly (0, 1, 2...)
+ * Resets all categories to original default order from menuData.ts.
+ * Newly added categories are appended at the end.
  * @param categories - Array of MenuCategory
- * @returns Array of MenuCategory in default alphabetical order
+ * @returns Array of MenuCategory in default natural order
  */
 export function resetCategoryOrder(categories: MenuCategory[]): MenuCategory[] {
-  const alphabetical = [...categories].sort((a, b) => a.name.localeCompare(b.name));
-  return reassignCategoryOrder(alphabetical);
+  const defaultOrderMap = new Map<string, number>();
+  defaultCategories.forEach((cat, index) => {
+    defaultOrderMap.set(cat.id, index);
+  });
+
+  const resetArr = [...categories].sort((a, b) => {
+    const aOrder = defaultOrderMap.get(a.id);
+    const bOrder = defaultOrderMap.get(b.id);
+    
+    if (aOrder !== undefined && bOrder !== undefined) {
+      return aOrder - bOrder;
+    }
+    if (aOrder !== undefined) return -1;
+    if (bOrder !== undefined) return 1;
+    
+    return a.name.localeCompare(b.name);
+  });
+
+  return reassignCategoryOrder(resetArr);
 }
 
 /**
