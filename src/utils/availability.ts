@@ -84,21 +84,6 @@ export function toggleItemAvailability(items: MenuItem[], id: string): MenuItem[
 }
 
 /**
- * Saves availability changes to localStorage
- * @param items - Array of MenuItem to save
- */
-export function saveAvailability(items: MenuItem[]): void {
-  // We only persist the id and its availability to minimize storage
-  // but to keep it simple, we store an object map of id -> boolean
-  const availabilityMap = items.reduce((acc, item) => {
-    acc[item.id] = item.available !== false;
-    return acc;
-  }, {} as Record<string, boolean>);
-  
-  localStorage.setItem("fj_menu_items", JSON.stringify(availabilityMap));
-}
-
-/**
  * Returns items grouped by category
  * @param items - Array of MenuItem
  * @returns Record grouping items by category

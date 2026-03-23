@@ -111,7 +111,7 @@ export default function AdminReviewsPage() {
                   <div>
                     <h3 className="text-lg font-semibold text-white">{review.name}</h3>
                     <p className="mt-1 text-xs text-white/50">
-                      {new Date(review.createdAt).toLocaleString("en-IN", {
+                      {new Date(review._creationTime).toLocaleString("en-IN", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",

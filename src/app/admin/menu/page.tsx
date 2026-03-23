@@ -34,7 +34,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { ImageUploader } from "@/components/admin/menu/ImageUploader";
 import { OfferEditor } from "@/components/admin/offers/OfferEditor";
-import { getSortedCategories, reassignCategoryOrder, reorderAfterDelete, saveCategories } from "@/utils/categoryOrder";
+import { getSortedCategories, reassignCategoryOrder, reorderAfterDelete } from "@/utils/categoryOrder";
 import { getOfferLabel } from "@/utils/offer";
 import {
   AlertDialog,
@@ -272,6 +272,7 @@ export default function AdminMenuPage() {
 
   const catalog = useQuery(api.menu.getCatalog);
   const saveCatalog = useMutation(api.menu.saveCatalog);
+  const saveCategoryLayout = useMutation(api.menu.saveCategoryLayout);
 
   useEffect(() => {
     if (catalog && !isLoaded) {
@@ -340,13 +341,18 @@ export default function AdminMenuPage() {
     }
   };
 
-  const handleSaveOrder = () => {
-    saveCategories(localSortedCategories);
-    
+  const handleSaveOrder = async () => {
     const updatedCategoriesMap = new Map(localSortedCategories.map(c => [c.id, c]));
     const nextCategories = categories.map(c => updatedCategoriesMap.get(c.id) || c);
-    
-    persistCatalog(nextCategories, items);
+
+    await saveCategoryLayout({
+      categories: nextCategories.map((category) => ({
+        id: category.id,
+        order: category.order ?? 0,
+        visible: category.visible !== false,
+      })),
+    });
+    await persistCatalog(nextCategories, items);
     
     setHasUnsavedOrder(false);
     toast.success("Category order saved successfully", {
@@ -384,11 +390,7 @@ export default function AdminMenuPage() {
     setCategories(nextCategories);
     setItems(nextItems);
     try {
-      const storableCategories = nextCategories.map((c: any) => {
-        const { order, visible, ...rest } = c;
-        return rest;
-      });
-      await saveCatalog({ categories: storableCategories as any, items: nextItems });
+      await saveCatalog({ categories: nextCategories as any, items: nextItems });
     } catch (err) {
       toast.error("Failed to sync with database: " + (err instanceof Error ? err.message : String(err)));
     }
@@ -513,14 +515,20 @@ export default function AdminMenuPage() {
     setCategoryToDelete(category);
   };
 
-  const confirmDeleteCategory = () => {
+  const confirmDeleteCategory = async () => {
     if (!categoryToDelete) return;
 
     const remaining = categories.filter((entry) => entry.id !== categoryToDelete.id);
     const nextCategories = reorderAfterDelete(remaining);
-    saveCategories(nextCategories);
-    
-    persistCatalog(nextCategories, items);
+
+    await saveCategoryLayout({
+      categories: nextCategories.map((category) => ({
+        id: category.id,
+        order: category.order ?? 0,
+        visible: category.visible !== false,
+      })),
+    });
+    await persistCatalog(nextCategories, items);
 
     if (editingCategoryId === categoryToDelete.id) {
       resetCategoryForm();
@@ -548,10 +556,6 @@ export default function AdminMenuPage() {
       return;
     }
 
-    if (typeof window !== "undefined") {
-      localStorage.removeItem("fj_menu_categories");
-    }
-
     persistCatalog(defaultCategories, defaultMenuItems);
     resetCategoryForm();
     resetItemForm();
@@ -571,7 +575,7 @@ export default function AdminMenuPage() {
             Menu Management
           </h2>
           <p className="mt-2 text-sm text-white/65">
-            Manage categories, pricing, product images, and offer tags from LocalStorage-backed admin state.
+            Manage categories, pricing, product images, and offer tags from Convex-backed real-time admin state.
           </p>
         </div>
 

@@ -8,7 +8,7 @@ import { getAvailableCount, getUnavailableCount } from "@/utils/availability";
 
 interface SaveButtonProps {
   hasUnsavedChanges: boolean;
-  onSave: () => void;
+  onSave: () => Promise<void>;
   stagedItems: MenuItem[];
 }
 
@@ -20,7 +20,7 @@ export function SaveButton({ hasUnsavedChanges, onSave, stagedItems }: SaveButto
     // Simulate tiny network delay for UX
     await new Promise((resolve) => setTimeout(resolve, 600));
     
-    onSave();
+    await onSave();
     
     const available = getAvailableCount(stagedItems);
     const unavailable = getUnavailableCount(stagedItems);

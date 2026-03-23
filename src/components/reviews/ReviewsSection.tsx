@@ -2,25 +2,34 @@
 
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { ReviewCard } from "@/components/reviews/ReviewCard";
 import { WriteReviewDialog } from "@/components/reviews/WriteReviewDialog";
 import type { ReviewRecord } from "@/lib/app-config";
-import { loadReviews, sortReviews } from "@/utils/reviews";
+import { sortReviews } from "@/utils/reviews";
 
 export function ReviewsSection() {
   const { settings } = useAppSettings();
+  const reviewsData = useQuery(api.reviews.listApproved);
   const [emblaRef, emblaApi] = useEmblaCarousel({ align: "start", dragFree: true });
-  const [approvedReviews, setApprovedReviews] = useState<ReviewRecord[]>([]);
-
-  useEffect(() => {
-    setApprovedReviews(
-      sortReviews(loadReviews().filter((review) => review.status === "approved")).slice(0, 5)
-    );
-  }, []);
+  const approvedReviews = useMemo<ReviewRecord[]>(() => {
+    const reviews = reviewsData ?? [];
+    const mapped = reviews.map((review: any) => ({
+      id: String(review._id),
+      name: review.name,
+      rating: review.rating,
+      reviewText: review.reviewText,
+      createdAt: new Date(review._creationTime).toISOString(),
+      status: review.status,
+      pinned: review.pinned,
+    }));
+    return sortReviews(mapped).slice(0, 5);
+  }, [reviewsData]);
 
   useEffect(() => {
     if (!emblaApi) {

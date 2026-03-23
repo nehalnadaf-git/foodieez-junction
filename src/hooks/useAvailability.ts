@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import { type MenuItem } from "@/data/menuData";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import {
@@ -12,7 +14,6 @@ import {
   markCategoryAvailable,
   markCategoryUnavailable,
   toggleItemAvailability,
-  saveAvailability,
   groupItemsByCategory,
 } from "@/utils/availability";
 
@@ -49,9 +50,9 @@ export interface UseAvailabilityResult {
   selectCategory: (category: string) => void;
   /** Function to mark all items in a category as unavailable */
   deselectCategory: (category: string) => void;
-  /** Function to persist staged changes to localStorage */
-  saveChanges: () => void;
-  /** Function to discard staged changes and sync with localStorage */
+  /** Function to persist staged changes to Convex */
+  saveChanges: () => Promise<void>;
+  /** Function to discard staged changes and sync with Convex data */
   discardChanges: () => void;
 }
 
@@ -62,40 +63,25 @@ export interface UseAvailabilityResult {
  */
 export function useAvailability(): UseAvailabilityResult {
   const { menuItems: baseMenuItems } = useMenuCatalog();
+  const setAvailabilityBulk = useMutation(api.menu.setAvailabilityBulk);
   const [items, setItems] = useState<MenuItem[]>([]);
   const [stagedItems, setStagedItems] = useState<MenuItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Load from localStorage on mount and sync
+  // Sync local staging state from Convex-backed menu catalog
   useEffect(() => {
     if (baseMenuItems.length === 0) return;
 
-    try {
-      const persistedStr = localStorage.getItem("fj_menu_items");
-      let currentItems = [...baseMenuItems];
+    const currentItems = baseMenuItems.map((item) => ({
+      ...item,
+      available: item.available ?? true,
+    }));
 
-      if (persistedStr) {
-        const persistedMap: Record<string, boolean> = JSON.parse(persistedStr);
-        currentItems = currentItems.map((item) => ({
-          ...item,
-          available: persistedMap[item.id] ?? item.available ?? true,
-        }));
-      } else {
-        // Initialize if not present
-        const map = currentItems.reduce((acc, item) => {
-          acc[item.id] = item.available !== false;
-          return acc;
-        }, {} as Record<string, boolean>);
-        localStorage.setItem("fj_menu_items", JSON.stringify(map));
-      }
-
-      setItems(currentItems);
-      setStagedItems(currentItems);
-    } catch (e) {
-      console.error("Local storage error", e);
-      setItems(baseMenuItems);
-      setStagedItems(baseMenuItems);
-    }
+    setItems(currentItems);
+    setStagedItems((prev) => {
+      const hasUnsaved = prev.length === currentItems.length && prev.some((item, index) => item.available !== currentItems[index].available);
+      return hasUnsaved ? prev : currentItems;
+    });
   }, [baseMenuItems]);
 
   // Derived properties based on staged items
@@ -144,10 +130,15 @@ export function useAvailability(): UseAvailabilityResult {
     setStagedItems((prev) => markCategoryUnavailable(prev, category));
   }, []);
 
-  const saveChanges = useCallback(() => {
-    saveAvailability(stagedItems);
+  const saveChanges = useCallback(async () => {
+    await setAvailabilityBulk({
+      updates: stagedItems.map((item) => ({
+        itemId: item.id,
+        available: item.available !== false,
+      })),
+    });
     setItems([...stagedItems]);
-  }, [stagedItems]);
+  }, [setAvailabilityBulk, stagedItems]);
 
   const discardChanges = useCallback(() => {
     setStagedItems([...items]);

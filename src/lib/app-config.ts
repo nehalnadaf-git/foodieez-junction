@@ -57,13 +57,8 @@ export interface AppSettings {
 }
 
 export const STORAGE_KEYS = {
-  appSettings: "fj-app-settings-v1",
   cart: "fj-cart-v1",
   tableBannerDismissed: "fj-table-banner-dismissed-v1",
-  adminSession: "fj-admin-session-v1",
-  reviews: "fj-reviews-v1",
-  tables: "fj-tables-v1",
-  menuOverrides: "fj-menu-overrides-v1",
 } as const;
 
 export const DEFAULT_ORDER_SETTINGS: OrderSettings = {

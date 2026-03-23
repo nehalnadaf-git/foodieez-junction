@@ -20,7 +20,6 @@ import {
   getSortedCategories,
   reassignCategoryOrder,
   resetCategoryOrder,
-  saveCategoryOrder,
 } from "@/utils/categoryOrder";
 import { type MenuCategory, type MenuItem } from "@/data/menuData";
 import { SortableCategoryRow } from "./SortableCategoryRow";
@@ -80,9 +79,6 @@ export function CategoryOrderManager({
       // Update local state for instant UX
       setActiveCategories(newOrderedCategories);
       
-      // Persist to localStorage
-      saveCategoryOrder(newOrderedCategories);
-      
       // Notify parent to sync the main state naturally
       onOrderChange(newOrderedCategories);
       
@@ -98,7 +94,6 @@ export function CategoryOrderManager({
   const handleResetOrder = () => {
     const defaultSorted = resetCategoryOrder(categories);
     setActiveCategories(defaultSorted);
-    saveCategoryOrder(defaultSorted);
     onOrderChange(defaultSorted);
     setIsConfirmOpen(false);
     toast.success("Category order reset to default", {
@@ -111,7 +106,6 @@ export function CategoryOrderManager({
       c.id === id ? { ...c, visible: c.visible === false ? true : false } : c
     );
     setActiveCategories(updated);
-    saveCategoryOrder(updated);
     onOrderChange(updated);
     
     const cat = updated.find(c => c.id === id);

@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Instagram, Facebook, MessageCircle } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Youtube } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -12,8 +14,8 @@ import {
   type SocialLinksFormValues,
 } from "@/lib/validations/social";
 import {
-  getSocialLinks,
-  saveSocialLinks,
+  DEFAULT_SOCIAL_LINKS,
+  mergeSocialLinks,
   getPlatformLabel,
   getPlatformPlaceholder,
   type SocialPlatform,
@@ -22,6 +24,7 @@ import {
 const PLATFORM_ORDER: SocialPlatform[] = [
   "instagram",
   "facebook",
+  "youtube",
   "whatsapp",
 ];
 
@@ -42,26 +45,21 @@ function PlatformIcon({
       return <Instagram className={iconClass} />;
     case "facebook":
       return <Facebook className={iconClass} />;
+    case "youtube":
+      return <Youtube className={iconClass} />;
     case "whatsapp":
       return <MessageCircle className={iconClass} />;
   }
 }
 
-function buildDefaultValues(): SocialLinksFormValues {
-  const stored = getSocialLinks();
-  const orderedLinks = PLATFORM_ORDER.map((platform) => {
-    const existing = stored.links.find((l) => l.platform === platform);
-    return existing ?? { platform, url: "", active: false };
-  });
-  return { links: orderedLinks };
-}
-
 export function SocialMediaLinks() {
   const [isHydrated, setIsHydrated] = useState(false);
+  const links = useQuery(api.socialLinks.getAll);
+  const saveAll = useMutation(api.socialLinks.saveAll);
 
   const form = useForm<SocialLinksFormValues>({
     resolver: zodResolver(socialLinksConfigSchema),
-    defaultValues: { links: PLATFORM_ORDER.map((p) => ({ platform: p, url: "", active: false })) },
+    defaultValues: { links: DEFAULT_SOCIAL_LINKS.links },
   });
 
   const { fields } = useFieldArray({
@@ -70,9 +68,13 @@ export function SocialMediaLinks() {
   });
 
   useEffect(() => {
-    form.reset(buildDefaultValues());
+    if (links === undefined) {
+      return;
+    }
+
+    form.reset({ links: mergeSocialLinks(links) });
     setIsHydrated(true);
-  }, [form]);
+  }, [form, links]);
 
   const watchedLinks = form.watch("links");
 
@@ -80,8 +82,8 @@ export function SocialMediaLinks() {
     form.setValue(`links.${index}.active`, checked, { shouldDirty: true });
   };
 
-  const onSubmit = (values: SocialLinksFormValues) => {
-    saveSocialLinks(values);
+  const onSubmit = async (values: SocialLinksFormValues) => {
+    await saveAll({ links: values.links });
     toast.success("Social media links saved successfully");
   };
 

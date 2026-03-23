@@ -24,7 +24,7 @@ export const socialUrlSchema = z
  * Schema for a single social link entry.
  */
 export const socialLinkSchema = z.object({
-  platform: z.enum(["instagram", "facebook", "whatsapp"]),
+  platform: z.enum(["instagram", "facebook", "youtube", "whatsapp"]),
   url: socialUrlSchema,
   active: z.boolean(),
 });

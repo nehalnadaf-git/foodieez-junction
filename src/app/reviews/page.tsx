@@ -13,7 +13,19 @@ import type { ReviewRecord } from "@/lib/app-config";
 
 export default function ReviewsPage() {
   const reviewsData = useQuery(api.reviews.listApproved);
-  const reviews = reviewsData ?? [];
+  const reviews: ReviewRecord[] = useMemo(
+    () =>
+      (reviewsData ?? []).map((review: any) => ({
+        id: String(review._id),
+        name: review.name,
+        rating: review.rating,
+        reviewText: review.reviewText,
+        createdAt: new Date(review._creationTime).toISOString(),
+        status: review.status,
+        pinned: review.pinned,
+      })),
+    [reviewsData]
+  );
 
   const averageRating = useMemo(() => {
     if (reviews.length === 0) {
@@ -72,7 +84,7 @@ export default function ReviewsPage() {
 
           <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {reviews.length > 0 ? (
-              reviews.map((review: any) => <ReviewCard key={review._id} review={review} />)
+              reviews.map((review) => <ReviewCard key={review.id} review={review} />)
             ) : (
               <motion.div
                 initial={{ opacity: 0, y: 14 }}

@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Instagram, Facebook, MessageCircle } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Youtube } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/utils";
 import {
-  getActiveSocialLinks,
+  mergeSocialLinks,
   getPlatformLabel,
   type SocialPlatform,
   type SocialLink,
@@ -18,21 +20,25 @@ function PlatformIcon({ platform }: { platform: SocialPlatform }) {
       return <Instagram className={iconClass} />;
     case "facebook":
       return <Facebook className={iconClass} />;
+    case "youtube":
+      return <Youtube className={iconClass} />;
     case "whatsapp":
       return <MessageCircle className={iconClass} />;
   }
 }
 
 export function SocialIcons() {
-  const [links, setLinks] = useState<SocialLink[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
+  const linksData = useQuery(api.socialLinks.getAll);
+  const links = useMemo<SocialLink[]>(() => {
+    if (linksData === undefined) {
+      return [];
+    }
+    return mergeSocialLinks(linksData).filter(
+      (link) => link.active && link.url.trim().length > 0
+    );
+  }, [linksData]);
 
-  useEffect(() => {
-    setLinks(getActiveSocialLinks());
-    setIsHydrated(true);
-  }, []);
-
-  if (!isHydrated || links.length === 0) {
+  if (links.length === 0) {
     return null;
   }
 

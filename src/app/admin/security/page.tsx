@@ -63,7 +63,7 @@ export default function AdminSecurityPage() {
     {
       label: "Admin password configured",
       ok: status?.hasPassword ?? false,
-      detail: "Stored in environment variables, not in LocalStorage.",
+      detail: "Stored in environment variables, not in browser storage.",
     },
     {
       label: "Session secret present",

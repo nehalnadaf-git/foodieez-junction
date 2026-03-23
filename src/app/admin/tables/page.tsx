@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import { QRCodeCanvas } from "qrcode.react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 import {
   closestCenter,
   DndContext,
@@ -30,9 +32,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/context/AppSettingsContext";
-import { STORAGE_KEYS, type TableRecord } from "@/lib/app-config";
+import { type TableRecord } from "@/lib/app-config";
 import { tableSchema, type TableInput } from "@/lib/validations/admin";
-import { loadFromStorage, saveToStorage } from "@/utils/storage";
 import {
   buildTableQrUrl,
   downloadDataUrl,
@@ -170,8 +171,12 @@ function SortableTableCard({
 
 export default function AdminTablesPage() {
   const { settings } = useAppSettings();
+  const tableRows = useQuery(api.restaurantTables.getAll);
+  const addTable = useMutation(api.restaurantTables.add);
+  const toggleTableActive = useMutation(api.restaurantTables.toggleActive);
+  const removeTable = useMutation(api.restaurantTables.remove);
+  const reorderTables = useMutation(api.restaurantTables.reorder);
   const [tables, setTables] = useState<TableRecord[]>([]);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const exportNodeRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -184,18 +189,19 @@ export default function AdminTablesPage() {
   });
 
   useEffect(() => {
-    const stored = loadFromStorage<TableRecord[]>(STORAGE_KEYS.tables, []);
-    setTables(normalizeTables(stored));
-    setHasLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (!hasLoaded) {
+    if (tableRows === undefined) {
       return;
     }
 
-    saveToStorage(STORAGE_KEYS.tables, normalizeTables(tables));
-  }, [hasLoaded, tables]);
+    const normalized: TableRecord[] = tableRows.map((row: any) => ({
+      id: row.tableId,
+      name: row.name,
+      number: row.number,
+      isActive: row.isActive,
+      sortOrder: row.sortOrder,
+    }));
+    setTables(normalizeTables(normalized));
+  }, [tableRows]);
 
   const sortedTables = useMemo(() => normalizeTables(tables), [tables]);
   const activeTables = useMemo(
@@ -210,7 +216,7 @@ export default function AdminTablesPage() {
   const getQrUrl = (tableNumber: string) =>
     buildTableQrUrl(settings.restaurant.baseDomain, tableNumber);
 
-  const onSubmit = (values: TableInput) => {
+  const onSubmit = async (values: TableInput) => {
     const normalizedNumber = values.number.trim();
     const normalizedName = values.name.trim();
 
@@ -220,21 +226,38 @@ export default function AdminTablesPage() {
       return;
     }
 
-    setTables((previous) => [
-      ...previous,
-      {
-        id: createTableId(),
-        name: normalizedName,
-        number: normalizedNumber,
-        isActive: true,
-        sortOrder: previous.length,
-      },
-    ]);
+    const tableId = createTableId();
+    await addTable({
+      tableId,
+      name: normalizedName,
+      number: normalizedNumber,
+      isActive: true,
+      sortOrder: sortedTables.length,
+    });
+
+    setTables((previous) =>
+      normalizeTables([
+        ...previous,
+        {
+          id: tableId,
+          name: normalizedName,
+          number: normalizedNumber,
+          isActive: true,
+          sortOrder: previous.length,
+        },
+      ])
+    );
     form.reset();
     toast.success("Table added successfully");
   };
 
-  const handleToggleActive = (tableId: string) => {
+  const handleToggleActive = async (tableId: string) => {
+    const target = tables.find((table) => table.id === tableId);
+    if (!target) {
+      return;
+    }
+
+    await toggleTableActive({ tableId, isActive: !target.isActive });
     setTables((previous) =>
       previous.map((table) =>
         table.id === tableId ? { ...table, isActive: !table.isActive } : table
@@ -242,11 +265,13 @@ export default function AdminTablesPage() {
     );
   };
 
-  const handleDelete = (table: TableRecord) => {
+  const handleDelete = async (table: TableRecord) => {
     const confirmed = window.confirm(`Delete ${table.name} (Table ${table.number})?`);
     if (!confirmed) {
       return;
     }
+
+    await removeTable({ tableId: table.id });
 
     setTables((previous) =>
       normalizeTables(previous.filter((entry) => entry.id !== table.id))
@@ -326,7 +351,7 @@ export default function AdminTablesPage() {
     }
   };
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id) {
       return;
@@ -342,6 +367,9 @@ export default function AdminTablesPage() {
       ...table,
       sortOrder: index,
     }));
+    await reorderTables({
+      tables: reordered.map((table) => ({ tableId: table.id, sortOrder: table.sortOrder })),
+    });
     setTables(reordered);
   };
 

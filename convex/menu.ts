@@ -13,6 +13,8 @@ export const getCatalog = query({
         name: c.name,
         image: c.image || "",
         imageSource: c.imageSource,
+        order: c.order,
+        visible: c.visible,
       })),
       items: items.map(i => ({
         id: i.itemId,
@@ -43,6 +45,8 @@ export const saveCatalog = mutation({
         name: v.string(),
         image: v.optional(v.string()),
         imageSource: v.optional(v.union(v.literal("upload"), v.literal("url"))),
+        order: v.optional(v.number()),
+        visible: v.optional(v.boolean()),
       })
     ),
     items: v.array(
@@ -99,6 +103,8 @@ export const saveCatalog = mutation({
         name: cat.name,
         image: cat.image,
         imageSource: cat.imageSource,
+        order: cat.order,
+        visible: cat.visible ?? true,
       });
     }
 
@@ -120,6 +126,56 @@ export const saveCatalog = mutation({
         imageSource: item.imageSource,
         imageScale: item.imageScale,
       });
+    }
+  },
+});
+
+export const setAvailabilityBulk = mutation({
+  args: {
+    updates: v.array(
+      v.object({
+        itemId: v.string(),
+        available: v.boolean(),
+      })
+    ),
+  },
+  handler: async (ctx, { updates }) => {
+    for (const update of updates) {
+      const existing = await ctx.db
+        .query("menuItems")
+        .withIndex("by_itemId", (q) => q.eq("itemId", update.itemId))
+        .first();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, { available: update.available });
+      }
+    }
+  },
+});
+
+export const saveCategoryLayout = mutation({
+  args: {
+    categories: v.array(
+      v.object({
+        id: v.string(),
+        order: v.number(),
+        visible: v.boolean(),
+      })
+    ),
+  },
+  handler: async (ctx, { categories }) => {
+    for (const category of categories) {
+      const existing = await ctx.db
+        .query("categories")
+        .withIndex("by_categoryId", (q) => q.eq("categoryId", category.id))
+        .first();
+
+      if (existing) {
+        await ctx.db.patch(existing._id, {
+          order: category.order,
+          visible: category.visible,
+        });
+      }
     }
   },
 });

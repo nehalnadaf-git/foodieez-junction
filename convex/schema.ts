@@ -15,6 +15,8 @@ export default defineSchema({
     name: v.string(),
     image: v.optional(v.string()),
     imageSource: v.optional(v.union(v.literal("upload"), v.literal("url"))),
+    order: v.optional(v.number()),
+    visible: v.optional(v.boolean()),
   }).index("by_categoryId", ["categoryId"]),
 
   menuItems: defineTable({
@@ -69,4 +71,32 @@ export default defineSchema({
     totalAmount: v.number(),
     status: v.string(), // "pending" | "preparing" | "completed" | "cancelled"
   }).index("by_orderId", ["orderId"]).index("by_status", ["status"]),
+
+  // ── NEW TABLES (localStorage → Convex migration) ──
+
+  appSettings: defineTable({
+    key: v.string(),
+    value: v.string(),
+  }).index("by_key", ["key"]),
+
+  restaurantStatus: defineTable({
+    isOpen: v.boolean(),
+    manualOverride: v.boolean(),
+    closedMessage: v.string(),
+    updatedAt: v.number(),
+  }),
+
+  socialLinks: defineTable({
+    platform: v.string(),
+    url: v.string(),
+    active: v.boolean(),
+  }).index("by_platform", ["platform"]),
+
+  restaurantTables: defineTable({
+    tableId: v.string(),
+    name: v.string(),
+    number: v.string(),
+    isActive: v.boolean(),
+    sortOrder: v.number(),
+  }).index("by_tableId", ["tableId"]).index("by_number", ["number"]),
 });

@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { getSocialLinks } from "@/utils/social";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { mergeSocialLinks } from "@/utils/social";
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -11,15 +13,14 @@ const WhatsAppIcon = () => (
 );
 
 const ContactSection = () => {
-  const [whatsappLink, setWhatsappLink] = useState("https://wa.me/919743862836");
-
-  useEffect(() => {
-    const config = getSocialLinks();
-    const wa = config.links.find((l) => l.platform === "whatsapp");
-    if (wa && wa.url) {
-      setWhatsappLink(wa.url);
+  const links = useQuery(api.socialLinks.getAll);
+  const whatsappLink = useMemo(() => {
+    if (links === undefined) {
+      return "https://wa.me/919743862836";
     }
-  }, []);
+    const wa = mergeSocialLinks(links).find((link) => link.platform === "whatsapp");
+    return wa?.url || "https://wa.me/919743862836";
+  }, [links]);
 
   return (
   <section id="contact" className="py-20 md:py-28 relative overflow-hidden">

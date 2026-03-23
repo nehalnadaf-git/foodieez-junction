@@ -8,9 +8,13 @@
  * @module
  */
 
+import type * as appSettings from "../appSettings.js";
 import type * as menu from "../menu.js";
 import type * as orders from "../orders.js";
+import type * as restaurantStatus from "../restaurantStatus.js";
+import type * as restaurantTables from "../restaurantTables.js";
 import type * as reviews from "../reviews.js";
+import type * as socialLinks from "../socialLinks.js";
 
 import type {
   ApiFromModules,
@@ -19,9 +23,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  appSettings: typeof appSettings;
   menu: typeof menu;
   orders: typeof orders;
+  restaurantStatus: typeof restaurantStatus;
+  restaurantTables: typeof restaurantTables;
   reviews: typeof reviews;
+  socialLinks: typeof socialLinks;
 }>;
 
 /**
