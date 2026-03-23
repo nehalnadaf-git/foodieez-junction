@@ -17,25 +17,21 @@ interface OfferEditorProps {
 }
 
 const offerTypeOptions: Array<{ value: OfferEditorFormValues["type"]; label: string }> = [
-  { value: "none", label: "No Offer" },
-  { value: "percentage_off", label: "Percentage Off" },
-  { value: "buy_one_get_one", label: "Buy One Get One Free" },
-  { value: "flat_discount", label: "Flat Discount" },
-  { value: "limited_time", label: "Limited Time" },
-  { value: "new_item", label: "New Item" },
-  { value: "best_seller", label: "Best Seller" },
-  { value: "today_only", label: "Today Only" },
-  { value: "custom", label: "Custom Text" },
+  { value: "percentage_off", label: "Percentage Offer" },
+  { value: "buy_one_get_one", label: "Buy One, Get One Free Offer" },
 ];
 
 export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: OfferEditorProps) {
+  const validTypes = ["percentage_off", "buy_one_get_one"] as const;
+  const isValidType = (type: any): type is typeof validTypes[number] => validTypes.includes(type);
+  
   const form = useForm<OfferEditorFormValues>({
     resolver: zodResolver(offerEditorSchema),
     defaultValues: {
-      type: initialOffer?.type ?? "none",
+      type: initialOffer?.type && isValidType(initialOffer.type) ? initialOffer.type : "percentage_off",
       value: initialOffer?.value,
       customText: initialOffer?.customText ?? "",
-      active: initialOffer?.active ?? false,
+      active: initialOffer?.active ?? true,
       expiresAt: initialOffer?.expiresAt
         ? new Date(initialOffer.expiresAt).toISOString().slice(0, 16)
         : "",
@@ -43,11 +39,14 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
   });
 
   useEffect(() => {
+    const validTypes = ["percentage_off", "buy_one_get_one"] as const;
+    const isValidType = (type: any): type is typeof validTypes[number] => validTypes.includes(type);
+    
     form.reset({
-      type: initialOffer?.type ?? "none",
+      type: initialOffer?.type && isValidType(initialOffer.type) ? initialOffer.type : "percentage_off",
       value: initialOffer?.value,
       customText: initialOffer?.customText ?? "",
-      active: initialOffer?.active ?? false,
+      active: initialOffer?.active ?? true,
       expiresAt: initialOffer?.expiresAt
         ? new Date(initialOffer.expiresAt).toISOString().slice(0, 16)
         : "",
@@ -61,23 +60,12 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
   const expiresAt = form.watch("expiresAt");
 
   useEffect(() => {
-    if (selectedType !== "none" && !form.getValues("active")) {
+    if (!form.getValues("active")) {
       form.setValue("active", true, { shouldDirty: true });
-    }
-
-    if (selectedType === "none") {
-      form.setValue("active", false, { shouldDirty: true });
-      form.setValue("value", undefined, { shouldDirty: true });
-      form.setValue("customText", "", { shouldDirty: true });
-      form.setValue("expiresAt", "", { shouldDirty: true });
     }
   }, [form, selectedType]);
 
   const previewOffer = useMemo<ItemOffer | undefined>(() => {
-    if (selectedType === "none") {
-      return undefined;
-    }
-
     return {
       type: selectedType,
       value: value,
@@ -88,12 +76,6 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
   }, [active, customText, expiresAt, selectedType, value]);
 
   const submit = form.handleSubmit((values) => {
-    if (values.type === "none") {
-      onSave(undefined);
-      toast.success("Offer removed");
-      return;
-    }
-
     const payload: ItemOffer = {
       type: values.type,
       value: values.value,
@@ -129,13 +111,13 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
         </Select>
       </div>
 
-      {(selectedType === "percentage_off" || selectedType === "flat_discount") && (
+      {selectedType === "percentage_off" && (
         <div>
-          <label className="mb-1 block text-xs uppercase tracking-[0.22em] text-white/50">Offer Value</label>
+          <label className="mb-1 block text-xs uppercase tracking-[0.22em] text-white/50">Percentage Value</label>
           <input
             type="number"
-            min={selectedType === "percentage_off" ? 1 : 1}
-            max={selectedType === "percentage_off" ? 99 : undefined}
+            min={1}
+            max={99}
             value={value ?? ""}
             onChange={(event) =>
               form.setValue("value", event.target.value ? Number(event.target.value) : undefined, {
@@ -144,28 +126,9 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
               })
             }
             className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/40"
-            placeholder={selectedType === "percentage_off" ? "50" : "20"}
+            placeholder="50"
           />
           {fieldError("value") && <p className="mt-1 text-xs text-red-300">{fieldError("value")}</p>}
-        </div>
-      )}
-
-      {selectedType === "custom" && (
-        <div>
-          <label className="mb-1 block text-xs uppercase tracking-[0.22em] text-white/50">Custom Text</label>
-          <input
-            value={customText ?? ""}
-            maxLength={20}
-            onChange={(event) =>
-              form.setValue("customText", event.target.value, {
-                shouldDirty: true,
-                shouldValidate: true,
-              })
-            }
-            className="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-white outline-none transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/40"
-            placeholder="Chef Special"
-          />
-          {fieldError("customText") && <p className="mt-1 text-xs text-red-300">{fieldError("customText")}</p>}
         </div>
       )}
 
