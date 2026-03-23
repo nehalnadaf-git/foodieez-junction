@@ -49,26 +49,26 @@ export function SaveButton({ hasUnsavedChanges, onSave, stagedItems }: SaveButto
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 40 }}
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[90%] md:w-auto"
+          className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] sm:w-auto px-2 sm:px-0"
         >
           <button
             onClick={handleSave}
             disabled={isSaving}
             className={cn(
-              "w-full md:w-auto flex items-center justify-center gap-3",
-              "bg-[#FBA919] text-zinc-900 font-bold px-8 py-3.5 rounded-full text-base",
+              "w-full sm:w-auto flex items-center justify-center gap-2 sm:gap-3",
+              "bg-[#FBA919] text-zinc-900 font-bold px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-sm sm:text-base",
               "shadow-[0_0_24px_rgba(251,169,25,0.6)] hover:shadow-[0_0_32px_rgba(251,169,25,0.8)]",
-              "transition-all duration-300 transform md:hover:-translate-y-1 active:scale-95",
+              "transition-all duration-300 transform sm:hover:-translate-y-1 active:scale-95",
               isSaving && "opacity-80 cursor-wait shadow-[0_0_16px_rgba(251,169,25,0.4)]"
             )}
           >
             {isSaving ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
             ) : (
-              <Save className="w-5 h-5" />
+              <Save className="w-4 h-4 sm:w-5 sm:h-5" />
             )}
-            <span>
-              {isSaving ? "Saving..." : "Save Availability"}
+            <span className="whitespace-nowrap">
+              {isSaving ? "Saving..." : "Save"}
             </span>
           </button>
         </motion.div>

@@ -52,7 +52,7 @@ export function CategorySection({
             )}
           </div>
           
-          <h3 className="font-display font-bold text-white text-lg tracking-wide">
+          <h3 className="font-display font-bold text-white text-base sm:text-lg tracking-wide truncate">
             {categoryName}
           </h3>
           
@@ -81,14 +81,15 @@ export function CategorySection({
             }
           }}
           className={cn(
-            "text-[11px] uppercase font-bold tracking-wider px-3.5 py-1.5 rounded-lg border",
-            "transition-all duration-200",
+            "text-[10px] sm:text-[11px] uppercase font-bold tracking-wider px-2 sm:px-3.5 py-1 sm:py-1.5 rounded-lg border",
+            "transition-all duration-200 whitespace-nowrap",
             isAllSelected
               ? "bg-red-500/10 text-red-400 border-red-500/30 hover:bg-red-500/20"
               : "bg-[#FBA919]/10 text-[#FBA919] border-[#FBA919]/30 hover:bg-[#FBA919]/20"
           )}
         >
-          {isAllSelected ? "Deselect Category" : "Select Category"}
+          <span className="hidden sm:inline">{isAllSelected ? "Deselect Category" : "Select Category"}</span>
+          <span className="sm:hidden">{isAllSelected ? "Deselect" : "Select"}</span>
         </button>
       </div>
 

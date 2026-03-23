@@ -13,12 +13,12 @@ export function StatsBar({
   unavailableCount,
 }: StatsBarProps) {
   return (
-    <div className="grid grid-cols-3 gap-3 md:gap-6 mb-8">
+    <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-6 mb-6 sm:mb-8">
       {/* Total Items */}
-      <div className="flex flex-col items-center justify-center py-4 px-2 rounded-2xl border border-white/10 backdrop-blur-xl bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-[90px]">
-        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 text-white/80">
-          <LayoutGrid className="w-4 h-4" />
-          <span className="text-xs md:text-sm font-medium uppercase tracking-wider">Total</span>
+      <div className="flex flex-col items-center justify-center py-3 sm:py-4 px-2 sm:px-3 rounded-xl sm:rounded-2xl border border-white/10 backdrop-blur-xl bg-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.3)] min-h-[80px] sm:min-h-[90px]">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 text-white/80">
+          <LayoutGrid className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-medium uppercase tracking-wider">Total</span>
         </div>
         <AnimatePresence mode="popLayout">
           <motion.span
@@ -26,7 +26,7 @@ export function StatsBar({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-2xl md:text-3xl font-display font-bold text-white/90"
+            className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-white/90"
           >
             {totalCount}
           </motion.span>
@@ -34,10 +34,10 @@ export function StatsBar({
       </div>
 
       {/* Available */}
-      <div className="flex flex-col items-center justify-center py-4 px-2 rounded-2xl border border-green-500/20 backdrop-blur-xl bg-green-500/10 shadow-[0_8px_32px_rgba(34,197,94,0.15)] min-h-[90px]">
-        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 text-green-400">
-          <CheckCircle2 className="w-4 h-4" />
-          <span className="text-xs md:text-sm font-medium uppercase tracking-wider text-center">Available</span>
+      <div className="flex flex-col items-center justify-center py-3 sm:py-4 px-2 sm:px-3 rounded-xl sm:rounded-2xl border border-green-500/20 backdrop-blur-xl bg-green-500/10 shadow-[0_8px_32px_rgba(34,197,94,0.15)] min-h-[80px] sm:min-h-[90px]">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 text-green-400">
+          <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-medium uppercase tracking-wider text-center">Available</span>
         </div>
         <AnimatePresence mode="popLayout">
           <motion.span
@@ -45,7 +45,7 @@ export function StatsBar({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-2xl md:text-3xl font-display font-bold text-green-400"
+            className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-green-400"
           >
             {availableCount}
           </motion.span>
@@ -53,10 +53,10 @@ export function StatsBar({
       </div>
 
       {/* Out of Stock */}
-      <div className="flex flex-col items-center justify-center py-4 px-2 rounded-2xl border border-red-500/20 backdrop-blur-xl bg-red-500/10 shadow-[0_8px_32px_rgba(239,68,68,0.15)] min-h-[90px]">
-        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 text-red-500">
-          <XCircle className="w-4 h-4" />
-          <span className="text-xs md:text-sm font-medium uppercase tracking-wider text-center">Out of Stock</span>
+      <div className="flex flex-col items-center justify-center py-3 sm:py-4 px-2 sm:px-3 rounded-xl sm:rounded-2xl border border-red-500/20 backdrop-blur-xl bg-red-500/10 shadow-[0_8px_32px_rgba(239,68,68,0.15)] min-h-[80px] sm:min-h-[90px]">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 text-red-500">
+          <XCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <span className="text-[10px] sm:text-xs md:text-sm font-medium uppercase tracking-wider text-center">Out of Stock</span>
         </div>
         <AnimatePresence mode="popLayout">
           <motion.span
@@ -64,7 +64,7 @@ export function StatsBar({
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="text-2xl md:text-3xl font-display font-bold text-red-500"
+            className="text-xl sm:text-2xl md:text-3xl font-display font-bold text-red-500"
           >
             {unavailableCount}
           </motion.span>
