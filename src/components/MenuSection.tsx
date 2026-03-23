@@ -352,13 +352,13 @@ const MenuSection = () => {
         </motion.div>
 
         {/* Category filter bar (Non-sticky) */}
-        <div className="relative z-30 py-3 flex flex-col items-center">
+        <div className="relative z-30 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
           <MenuFilterToggle
             filter={filter}
             setFilter={setFilter}
           />
           <div
-            className="mx-auto w-fit max-w-full rounded-2xl px-2.5 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide"
+            className="w-full lg:w-fit max-w-full rounded-2xl px-2.5 py-2 flex gap-1.5 overflow-x-auto scrollbar-hide"
             style={{
               backgroundColor: "rgba(80,30,10,0.78)",
               backdropFilter: "blur(16px)",
