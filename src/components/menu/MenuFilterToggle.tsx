@@ -15,8 +15,8 @@ export const MenuFilterToggle = ({
   setFilter,
 }: MenuFilterToggleProps) => {
   return (
-    <div className="flex flex-col md:flex-row items-start md:items-center justify-start md:justify-center gap-4 mb-4 mt-2 w-full lg:mb-0 z-40 relative lg:flex-row">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-start gap-3 sm:gap-4 w-full lg:w-auto lg:justify-center">
+    <div className="flex flex-col md:flex-row items-center md:items-center justify-center md:justify-center gap-4 mb-4 mt-2 w-full lg:mb-0 z-40 relative lg:flex-row">
+      <div className="flex flex-col sm:flex-row items-center sm:items-center justify-center gap-3 sm:gap-4 w-full lg:w-auto lg:justify-center">
         {/* Toggle Button Group */}
         <div
           className={cn(
