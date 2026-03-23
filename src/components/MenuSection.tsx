@@ -352,7 +352,7 @@ const MenuSection = () => {
         </motion.div>
 
         {/* Category filter bar (Non-sticky) */}
-        <div className="relative z-30 py-3 flex flex-col lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+        <div className="relative z-30 py-3 flex flex-col items-center gap-6">
           <MenuFilterToggle
             filter={filter}
             setFilter={setFilter}
