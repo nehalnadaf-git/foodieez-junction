@@ -2,12 +2,7 @@
 export type OfferType =
   | "percentage_off"
   | "buy_one_get_one"
-  | "flat_discount"
-  | "limited_time"
-  | "new_item"
-  | "best_seller"
-  | "today_only"
-  | "custom";
+  | "new";
 
 export interface ItemOffer {
   type: OfferType;

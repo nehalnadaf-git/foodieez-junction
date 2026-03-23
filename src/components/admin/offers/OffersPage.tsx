@@ -23,12 +23,7 @@ const offerFilterOptions = [
   { value: "all", label: "All Offers" },
   { value: "percentage_off", label: "Percentage Off" },
   { value: "buy_one_get_one", label: "Buy One Get One" },
-  { value: "flat_discount", label: "Flat Discount" },
-  { value: "limited_time", label: "Limited Time" },
-  { value: "new_item", label: "New Item" },
-  { value: "best_seller", label: "Best Seller" },
-  { value: "today_only", label: "Today Only" },
-  { value: "custom", label: "Custom" },
+  { value: "new", label: "New" },
 ] as const;
 
 export function OffersPage() {

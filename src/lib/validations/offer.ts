@@ -3,6 +3,7 @@ import { z } from "zod";
 export const offerTypes = [
   "percentage_off",
   "buy_one_get_one",
+  "new",
 ] as const;
 
 export const offerTypeSchema = z.enum(offerTypes);

@@ -30,7 +30,7 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
   const hasDiscountOffer =
     Boolean(item.offer) &&
     isOfferActive(item.offer) &&
-    (item.offer?.type === "percentage_off" || item.offer?.type === "flat_discount");
+    item.offer?.type === "percentage_off";
   const discountedPrice = hasDiscountOffer ? calculateDiscountedPrice(basePrice, item.offer) : basePrice;
   const hasImage = Boolean(item.image && item.image.trim().length > 0 && !imageError);
   const isOutOfStock = item.available === false;
@@ -53,9 +53,6 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
         style={{ top: -10 }}
       >
         <div className="relative">
-          {isOutOfStock && filterMode === "all" && (
-            <div className="absolute inset-0 rounded-full bg-black/40 z-20 pointer-events-none" />
-          )}
           {hasImage && item.image ? (
             <Image
               src={item.image}

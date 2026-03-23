@@ -33,18 +33,8 @@ export function getOfferLabel(offer?: ItemOffer): string {
       return `${Math.max(0, offer.value ?? 0)}% OFF`;
     case "buy_one_get_one":
       return "BOGO FREE";
-    case "flat_discount":
-      return `₹${Math.max(0, offer.value ?? 0)} OFF`;
-    case "limited_time":
-      return "LIMITED TIME";
-    case "new_item":
+    case "new":
       return "NEW";
-    case "best_seller":
-      return "BEST SELLER";
-    case "today_only":
-      return "TODAY ONLY";
-    case "custom":
-      return offer.customText?.trim() || "SPECIAL";
     default:
       return "";
   }
@@ -61,12 +51,7 @@ export function getOfferBadgeColor(offer?: ItemOffer): string {
   const colorMap: Record<OfferType, string> = {
     percentage_off: "bg-red-500 text-white shadow-[0_6px_20px_rgba(239,68,68,0.35)]",
     buy_one_get_one: "bg-primary text-black shadow-[0_6px_20px_rgba(245,166,35,0.35)]",
-    flat_discount: "bg-red-500 text-white shadow-[0_6px_20px_rgba(239,68,68,0.35)]",
-    limited_time: "bg-red-500 text-white shadow-[0_6px_20px_rgba(239,68,68,0.35)]",
-    new_item: "bg-emerald-500 text-white shadow-[0_6px_20px_rgba(16,185,129,0.35)]",
-    best_seller: "bg-primary text-black shadow-[0_6px_20px_rgba(245,166,35,0.35)]",
-    today_only: "bg-red-500 text-white shadow-[0_6px_20px_rgba(239,68,68,0.35)]",
-    custom: "bg-primary text-black shadow-[0_6px_20px_rgba(245,166,35,0.35)]",
+    new: "bg-emerald-500 text-white shadow-[0_6px_20px_rgba(16,185,129,0.35)]",
   };
 
   return colorMap[offer.type];
@@ -84,11 +69,6 @@ export function calculateDiscountedPrice(originalPrice: number, offer?: ItemOffe
     const percentage = Math.min(99, Math.max(1, offer.value ?? 0));
     const discounted = originalPrice - (originalPrice * percentage) / 100;
     return Math.max(0, Math.round(discounted));
-  }
-
-  if (offer.type === "flat_discount") {
-    const discount = Math.max(1, offer.value ?? 0);
-    return Math.max(0, originalPrice - discount);
   }
 
   return originalPrice;
@@ -110,7 +90,7 @@ export function formatOfferForWhatsApp(
   const label = getOfferLabel(offer);
   const discounted = calculateDiscountedPrice(originalPrice, offer);
 
-  if (offer.type === "percentage_off" || offer.type === "flat_discount") {
+  if (offer.type === "percentage_off") {
     return `• ${itemName} x${qty} — ₹${discounted} (${label}, was ₹${originalPrice})`;
   }
 

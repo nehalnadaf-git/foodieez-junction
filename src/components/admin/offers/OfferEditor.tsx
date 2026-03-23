@@ -19,6 +19,7 @@ interface OfferEditorProps {
 const offerTypeOptions: Array<{ value: OfferEditorFormValues["type"]; label: string }> = [
   { value: "percentage_off", label: "Percentage Offer" },
   { value: "buy_one_get_one", label: "Buy One, Get One Free Offer" },
+  { value: "new", label: "New" },
 ];
 
 export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: OfferEditorProps) {

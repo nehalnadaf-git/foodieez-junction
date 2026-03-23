@@ -17,7 +17,7 @@ export const OutOfStockBadge = ({ className }: OutOfStockBadgeProps) => {
       className={cn(
         "absolute top-3 right-3 z-50 pointer-events-none",
         "bg-red-500/90 text-white text-[10px] md:text-xs font-bold uppercase tracking-wider",
-        "px-2.5 py-1 rounded-full shadow-[0_4px_12px_rgba(239,68,68,0.3)] border border-red-400/30",
+        "px-2.5 py-1 rounded-lg shadow-[0_4px_12px_rgba(239,68,68,0.3)] border border-red-400/30",
         "backdrop-blur-md",
         className
       )}

@@ -15,7 +15,7 @@ export function OfferBadge({ offer }: OfferBadgeProps) {
   }
 
   const label = getOfferLabel(offer);
-  const shouldPulse = offer.type === "limited_time" || offer.type === "today_only";
+  const shouldPulse = offer.type === "new";
 
   return (
     <motion.div

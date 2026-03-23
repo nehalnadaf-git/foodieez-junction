@@ -488,10 +488,7 @@ const OrderModal = () => {
                             const hasDiscount =
                               Boolean(cartItem.item.offer) &&
                               isOfferActive(cartItem.item.offer) &&
-                              (cartItem.item.offer?.type ===
-                                "percentage_off" ||
-                                cartItem.item.offer?.type ===
-                                "flat_discount") &&
+                              cartItem.item.offer?.type === "percentage_off" &&
                               calculateDiscountedPrice(
                                 baseUnitPrice,
                                 cartItem.item.offer
