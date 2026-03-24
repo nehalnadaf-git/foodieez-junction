@@ -33,53 +33,45 @@ export interface BuildWhatsAppMessageInput {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
-const D = "================================";
-const d = "--------------------------------";
+const D = "--------------------";
+const d = "--------------------";
 
 function rs(n: number): string {
   return `Rs.${Math.round(n)}`;
 }
 
 function sizeTag(size: WhatsAppLineItem["size"]): string {
-  if (size === "small") return " (Small)";
-  if (size === "large") return " (Large)";
+  if (size === "small") return " (S)";
+  if (size === "large") return " (L)";
   return "";
 }
 
 /**
- * Returns compact lines for one cart item — designed to be quickly scanned
- * by the restaurant owner when packing or serving.
+ * Two-line item format — clean and readable on mobile.
  *
- * Format:
- *   1. Item Name (Size)       x2
- *      BOGO — pack 2, bill 1    Rs.90
+ *   1. Chicken Momos (Small)
+ *      x2  |  BOGO Free  |  Rs.90
  *
- *   2. Item Name (Size)       x1
- *      20% Off — Rs.64          (saved Rs.16)
+ *   2. Veg Spring Roll
+ *      x1  |  20% Off  |  Rs.64
  *
- *   3. Item Name              x3
- *      Rs.360
+ *   3. Nachos
+ *      x3  |  Rs.360
  */
 function formatItem(item: WhatsAppLineItem, idx: number): string[] {
-  // Line 1: number + name + size + quantity
-  const label = `${item.name}${sizeTag(item.size)}`;
-  const qtyStr = `x${item.quantity}`;
-  // Pad so qty consistently aligns at ~40 chars
-  const gap = Math.max(1, 38 - label.length - qtyStr.length);
-  const line1 = `${idx + 1}. ${label}${" ".repeat(gap)}${qtyStr}`;
+  const name = `${idx + 1}. ${item.name}${sizeTag(item.size)}`;
 
-  // Line 2: offer detail + price
-  let line2: string;
+  const parts: string[] = [`x${item.quantity}`];
+
   if (item.offerType === "bogo") {
-    line2 = `   BOGO — pack ${item.quantity}, bill ${item.billedQuantity}    ${rs(item.itemTotal)}`;
+    parts.push("BOGO Free");
   } else if (item.offerType === "percentage") {
-    const pct = Math.round(item.offerPercentage ?? 0);
-    line2 = `   ${pct}% Off — ${rs(item.itemTotal)}    (was ${rs(item.originalPrice * item.quantity)})`;
-  } else {
-    line2 = `   ${rs(item.itemTotal)}`;
+    parts.push(`${Math.round(item.offerPercentage ?? 0)}% Off`);
   }
 
-  return [line1, line2];
+  parts.push(rs(item.itemTotal));
+
+  return [name, `   ${parts.join("  |  ")}`];
 }
 
 // ─── Main builder ─────────────────────────────────────────────────────────────

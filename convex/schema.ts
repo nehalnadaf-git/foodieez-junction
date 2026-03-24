@@ -36,8 +36,8 @@ export default defineSchema({
         })
       )
     ),
-    available: v.boolean(),
-    isSpecial: v.boolean(),
+    available: v.optional(v.boolean()),
+    isSpecial: v.optional(v.boolean()),
     offerType: v.optional(
       v.union(
         v.literal("bogo"),
