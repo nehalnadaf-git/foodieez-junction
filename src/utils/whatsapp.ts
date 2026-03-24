@@ -7,6 +7,7 @@ export interface WhatsAppLineItem {
   billedQuantity: number;
   size: "small" | "large" | "single";
   finalPrice: number;
+  originalPrice: number;
   itemTotal: number;
   savings: number;
   offerType: OfferType;
@@ -30,124 +31,140 @@ export interface BuildWhatsAppMessageInput {
   specialInstructions?: string;
 }
 
-const DIVIDER = "--------------------------------------------";
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-function toRs(value: number): string {
-  return `Rs.${Math.round(value)}`;
+const D = "================================";
+const d = "--------------------------------";
+
+function rs(n: number): string {
+  return `Rs.${Math.round(n)}`;
 }
 
-function formatItemName(item: WhatsAppLineItem): string {
-  const sizeLabel =
-    item.size === "small" ? "Small" : item.size === "large" ? "Large" : "";
-
-  if (item.offerType === "new_tag") {
-    if (sizeLabel) {
-      return `${item.name} (${sizeLabel}, New)`;
-    }
-
-    return `${item.name} (New)`;
-  }
-
-  if (sizeLabel) {
-    return `${item.name} (${sizeLabel})`;
-  }
-
-  return item.name;
+function sizeTag(size: WhatsAppLineItem["size"]): string {
+  if (size === "small") return " (Small)";
+  if (size === "large") return " (Large)";
+  return "";
 }
 
-function formatOfferLine(item: WhatsAppLineItem): string | null {
+/**
+ * Returns compact lines for one cart item — designed to be quickly scanned
+ * by the restaurant owner when packing or serving.
+ *
+ * Format:
+ *   1. Item Name (Size)       x2
+ *      BOGO — pack 2, bill 1    Rs.90
+ *
+ *   2. Item Name (Size)       x1
+ *      20% Off — Rs.64          (saved Rs.16)
+ *
+ *   3. Item Name              x3
+ *      Rs.360
+ */
+function formatItem(item: WhatsAppLineItem, idx: number): string[] {
+  // Line 1: number + name + size + quantity
+  const label = `${item.name}${sizeTag(item.size)}`;
+  const qtyStr = `x${item.quantity}`;
+  // Pad so qty consistently aligns at ~40 chars
+  const gap = Math.max(1, 38 - label.length - qtyStr.length);
+  const line1 = `${idx + 1}. ${label}${" ".repeat(gap)}${qtyStr}`;
+
+  // Line 2: offer detail + price
+  let line2: string;
   if (item.offerType === "bogo") {
-    return "Offer      : BOGO Free";
+    line2 = `   BOGO — pack ${item.quantity}, bill ${item.billedQuantity}    ${rs(item.itemTotal)}`;
+  } else if (item.offerType === "percentage") {
+    const pct = Math.round(item.offerPercentage ?? 0);
+    line2 = `   ${pct}% Off — ${rs(item.itemTotal)}    (was ${rs(item.originalPrice * item.quantity)})`;
+  } else {
+    line2 = `   ${rs(item.itemTotal)}`;
   }
 
-  if (item.offerType === "percentage") {
-    const percentage = Math.round(item.offerPercentage ?? 0);
-    return `Offer      : ${percentage}% Off`;
-  }
-
-  return null;
+  return [line1, line2];
 }
 
-function formatQtyLine(item: WhatsAppLineItem): string {
-  if (item.offerType === "bogo") {
-    return `Qty        : ${item.quantity} (Billed: ${item.billedQuantity})`;
-  }
-
-  return `Qty        : ${item.quantity}`;
-}
+// ─── Main builder ─────────────────────────────────────────────────────────────
 
 export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
-  const lines: string[] = [
-    DIVIDER,
-    `${input.restaurantName.toUpperCase()} - ORDER DETAILS`,
-    DIVIDER,
-    `Order Type : ${input.orderType === "dine-in" ? "🪑 Dine-In" : "📦 Takeaway"}`,
-    `Name       : ${input.customerName}`,
-  ];
+  const lines: string[] = [];
 
+  // ── Order header (most important — owner reads this first) ───────────────
+  lines.push(D);
+  lines.push(input.restaurantName.toUpperCase());
+  lines.push(`ORDER : ${input.orderId}`);
+  lines.push(D);
+
+  // Type + customer on the same block, keep it easy to read at a glance
   if (input.orderType === "dine-in") {
-    lines.push(`Table No   : ${input.tableNumber ?? "-"}${input.scannedTableNumber ? " (QR Verified)" : ""}`);
+    const tableStr = input.tableNumber ?? "-";
+    const qrTag = input.scannedTableNumber ? " (QR)" : "";
+    lines.push(`DINE-IN  |  TABLE ${tableStr}${qrTag}`);
+  } else {
+    lines.push("TAKEAWAY");
   }
+  lines.push(`Customer : ${input.customerName}`);
+  lines.push(`Payment  : ${input.paymentMethod === "cash" ? "Cash" : "UPI"}`);
 
-  lines.push(DIVIDER);
-  lines.push("ORDER SUMMARY");
-  lines.push(DIVIDER);
+  // ── Items — the most critical section for the owner ──────────────────────
+  lines.push(d);
+  lines.push("ITEMS");
+  lines.push(d);
 
-  input.items.forEach((item, index) => {
-    lines.push(formatItemName(item));
-
-    const offerLine = formatOfferLine(item);
-    if (offerLine) {
-      lines.push(offerLine);
-    }
-
-    lines.push(formatQtyLine(item));
-    lines.push(`Price      : ${toRs(item.itemTotal)}`);
-
-    if (item.savings > 0) {
-      lines.push(`Savings    : ${toRs(item.savings)}`);
-    }
-
-    if (index !== input.items.length - 1) {
-      lines.push("");
-    }
+  input.items.forEach((item, idx) => {
+    const itemLines = formatItem(item, idx);
+    itemLines.forEach((l) => lines.push(l));
+    if (idx < input.items.length - 1) lines.push("");
   });
 
-  lines.push(DIVIDER);
-  lines.push("PRICE BREAKDOWN");
-  lines.push(DIVIDER);
-  lines.push(`Subtotal   : ${toRs(input.subtotal)}`);
+  // ── Totals ────────────────────────────────────────────────────────────────
+  lines.push(d);
+  lines.push(`Subtotal  : ${rs(input.subtotal)}`);
   if (input.totalSavings > 0) {
-    lines.push(`Savings    : ${toRs(input.totalSavings)}`);
+    lines.push(`Savings   : ${rs(input.totalSavings)}`);
   }
-  lines.push(DIVIDER);
-  lines.push(`Total      : ${toRs(input.totalAmount)}`);
-  lines.push(DIVIDER);
-  lines.push(`Payment    : ${input.paymentMethod === "cash" ? "Cash" : "Paytm UPI"}`);
-  lines.push(DIVIDER);
+  lines.push(`TOTAL DUE : ${rs(input.totalAmount)}`);
+  lines.push(d);
 
-  const amount = Math.round(input.totalAmount);
-  lines.push(`Pay here   : upi://pay?pa=${encodeURIComponent(input.upiId)}`);
-  lines.push(`             &pn=${encodeURIComponent(input.restaurantName)}`);
-  lines.push(`             &am=${amount}`);
-  lines.push("             &cu=INR");
+  // ── UPI link (only for UPI orders, no surrounding instructions) ──────────
+  if (input.paymentMethod === "upi") {
+    const amount = Math.round(input.totalAmount);
+    // Single unbroken line — the only way for WhatsApp to render it tappable
+    const upiLink = [
+      "upi://pay",
+      `?pa=${encodeURIComponent(input.upiId)}`,
+      `&pn=${encodeURIComponent(input.restaurantName)}`,
+      `&am=${amount}`,
+      `&cu=INR`,
+      `&tn=${encodeURIComponent(input.orderId)}`,
+    ].join("");
 
-  lines.push(DIVIDER);
-  if (input.specialInstructions && input.specialInstructions.trim().length > 0) {
-    lines.push(`Instructions: ${input.specialInstructions.trim()}`);
-    lines.push(DIVIDER);
+    lines.push("PAYTM / UPI PAYMENT");
+    lines.push(upiLink);
+    lines.push(d);
   }
-  lines.push("Please confirm the order. Thank you.");
-  lines.push(DIVIDER);
+
+  // ── Special instructions ─────────────────────────────────────────────────
+  if (input.specialInstructions?.trim()) {
+    lines.push(`NOTE : ${input.specialInstructions.trim()}`);
+    lines.push(d);
+  }
+
+  // ── Footer ───────────────────────────────────────────────────────────────
+  if (input.estimatedTime) {
+    lines.push(`Est. Ready : ${input.estimatedTime}`);
+  }
+  lines.push(D);
 
   return lines.join("\n");
 }
 
+// ─── URL builder ─────────────────────────────────────────────────────────────
+
 export function buildWhatsAppUrl(phoneNumber: string, message: string): string {
   const digits = phoneNumber.replace(/\D/g, "");
-  const withCountryCode = digits.startsWith("91") && digits.length > 10
-    ? digits
-    : `91${digits}`;
+  const withCountryCode =
+    digits.startsWith("91") && digits.length > 10
+      ? digits
+      : `91${digits}`;
 
   return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
 }
