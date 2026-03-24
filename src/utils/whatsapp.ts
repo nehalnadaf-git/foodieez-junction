@@ -81,12 +81,12 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
     DIVIDER,
     `${input.restaurantName.toUpperCase()} - ORDER DETAILS`,
     DIVIDER,
-    `Order Type : ${input.orderType === "dine-in" ? "Dine-In" : "Takeaway"}`,
+    `Order Type : ${input.orderType === "dine-in" ? "🪑 Dine-In" : "📦 Takeaway"}`,
     `Name       : ${input.customerName}`,
   ];
 
   if (input.orderType === "dine-in") {
-    lines.push(`Table No   : ${input.tableNumber ?? "-"}`);
+    lines.push(`Table No   : ${input.tableNumber ?? "-"}${input.scannedTableNumber ? " (QR Verified)" : ""}`);
   }
 
   lines.push(DIVIDER);

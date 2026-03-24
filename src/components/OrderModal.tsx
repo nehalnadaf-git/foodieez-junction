@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { X, Check } from "lucide-react";
+import { X, Check, ShoppingBag, UtensilsCrossed } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import type { CartItem } from "@/context/CartContext";
@@ -20,6 +20,12 @@ const OrderModal = () => {
   const { items, grandTotal, subtotal, totalSavings, clearCart } = useCart();
   const { settings } = useAppSettings();
   const { tableNumber: scannedTableNumber } = useTableNumber();
+
+  const dineInEnabled = settings.order.dineInEnabled;
+  // QR table scans always unlock dine-in regardless of the admin toggle
+  const hasQrTable = !!scannedTableNumber;
+  // Dine-in is available when admin enables it globally OR a QR table is scanned
+  const isDineInUnlocked = dineInEnabled || hasQrTable;
 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -45,20 +51,21 @@ const OrderModal = () => {
     const handler = () => {
       // Reset every field cleanly every time the modal is opened
       setIsOpen(true);
-      setStep(1);
-      setOrderType(scannedTableNumber ? "dine-in" : null);
+      setStep(1); // Always show Step 1 — both cards are always visible
+      // QR scan auto-selects dine-in; otherwise customer explicitly chooses
+      setOrderType(hasQrTable ? "dine-in" : null);
       setName("");
       setTableNo(scannedTableNumber ?? "");
       setPayment(availablePayments[0] ?? "cash");
       setSpecialInstructions("");
       setOrderId(generateOrderToken(settings.order.orderIdPrefix));
       setShowSuccess(false);
-      setIsSubmitting(false); // ← always clear submitting lock on open
+      setIsSubmitting(false);
     };
 
     window.addEventListener("open-order-modal", handler);
     return () => window.removeEventListener("open-order-modal", handler);
-  }, [availablePayments, scannedTableNumber, settings.order.orderIdPrefix]);
+  }, [availablePayments, scannedTableNumber, settings.order.orderIdPrefix, hasQrTable]);
 
   // Don't allow backdrop close while order is in-flight or success is shown
   const close = useCallback(() => {
@@ -93,7 +100,7 @@ const OrderModal = () => {
   }, [canProceed, step, availablePayments.length]);
 
   const goBack = useCallback(() => {
-    // If we're on step 4 and skipped step 3, go back to step 2
+    // If we're on step 4 and only one payment method, go back to step 2
     if (step === 4 && availablePayments.length === 1) {
       setStep(2);
     } else {
@@ -267,44 +274,140 @@ const OrderModal = () => {
                   {/* ── Step 1: Order Type ── */}
                   {step === 1 && (
                     <div>
-                      <h3 className="text-2xl font-display text-foreground tracking-wider mb-6">
-                        How would you like it? 🍽️
-                      </h3>
-                      {scannedTableNumber && (
-                        <p className="text-xs text-primary font-heading mb-4">
-                          QR table detected: Table {scannedTableNumber}. You
-                          can still switch to takeaway.
+                      <div className="mb-5">
+                        <h3 className="text-xl font-display text-foreground tracking-wider">
+                          How would you like your order? 🍽️
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-1 font-body">
+                          Choose your preferred ordering method
                         </p>
-                      )}
-                      <div className="grid grid-cols-2 gap-4">
-                        {(["dine-in", "takeaway"] as const).map((type) => (
-                          <button
-                            key={type}
+                      </div>
+
+                      <div className="flex flex-col gap-3">
+
+                        {/* ─── Takeaway — always active ─── */}
+                        <motion.button
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0, duration: 0.22 }}
+                          onClick={() => setOrderType(orderType === "takeaway" ? null : "takeaway")}
+                          className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${
+                            orderType === "takeaway"
+                              ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_24px_rgba(16,185,129,0.15)]"
+                              : "border-white/10 bg-white/[0.04] hover:border-emerald-500/40 hover:bg-white/[0.06]"
+                          }`}
+                        >
+                          {orderType === "takeaway" && (
+                            <div className="absolute top-3.5 right-3.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center animate-scale-in">
+                              <Check className="w-3 h-3 text-black stroke-[3.5px]" />
+                            </div>
+                          )}
+                          <div className="flex items-start gap-3.5">
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "takeaway" ? "bg-emerald-500/25" : "bg-emerald-500/10 border border-emerald-500/20"}`}>
+                              <ShoppingBag className={`w-[18px] h-[18px] transition-colors ${orderType === "takeaway" ? "text-emerald-400" : "text-emerald-500/60"}`} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                <span className="font-display font-bold text-sm text-foreground">Takeaway</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 leading-none">
+                                  Always Available
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground font-body">Pack and carry</p>
+                              <p className="text-[11px] text-muted-foreground/55 font-body mt-1 leading-relaxed">
+                                Order from anywhere and pick up at our counter
+                              </p>
+                            </div>
+                          </div>
+                        </motion.button>
+
+                        {/* ─── Dine-In ─── */}
+                        {isDineInUnlocked ? (
+                          /* ACTIVE — admin enabled it OR QR scanned */
+                          <motion.button
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15, duration: 0.22 }}
                             onClick={() => {
-                              setOrderType(type);
-                              // Auto-fill table number when switching to dine-in with a QR scan
-                              if (type === "dine-in" && scannedTableNumber) {
-                                setTableNo(scannedTableNumber);
+                              if (orderType === "dine-in") {
+                                setOrderType(null);
+                              } else {
+                                setOrderType("dine-in");
+                                if (hasQrTable) setTableNo(scannedTableNumber ?? "");
                               }
                             }}
-                            className={`relative glass p-6 text-center transition-all rounded-xl ${orderType === type
-                              ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]"
-                              : "hover:border-primary/30"
-                              }`}
+                            className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${
+                              orderType === "dine-in"
+                                ? "border-primary bg-primary/10 shadow-[0_0_24px_rgba(245,166,35,0.15)]"
+                                : "border-white/10 bg-white/[0.04] hover:border-primary/40 hover:bg-white/[0.06]"
+                            }`}
                           >
-                            {orderType === type && (
-                              <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
-                                <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
+                            {orderType === "dine-in" && (
+                              <div className="absolute top-3.5 right-3.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                                <Check className="w-3 h-3 text-black stroke-[3.5px]" />
                               </div>
                             )}
-                            <span className="text-3xl block mb-2">
-                              {type === "dine-in" ? "🪑" : "📦"}
-                            </span>
-                            <span className="font-heading font-bold text-sm text-foreground uppercase">
-                              {type === "dine-in" ? "Dine-In" : "Takeaway"}
-                            </span>
-                          </button>
-                        ))}
+                            <div className="flex items-start gap-3.5">
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "dine-in" ? "bg-primary/20" : "bg-white/[0.08]"}`}>
+                                <UtensilsCrossed className={`w-[18px] h-[18px] transition-colors ${orderType === "dine-in" ? "text-primary" : "text-white/50"}`} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <span className="font-display font-bold text-sm text-foreground">Dine-In</span>
+                                  {hasQrTable ? (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 leading-none">
+                                      ✅ Table {scannedTableNumber} Detected
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-primary/15 border border-primary/30 text-primary leading-none">
+                                      Available
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-muted-foreground font-body">Sit and eat with us</p>
+                                <p className="text-[11px] text-muted-foreground/55 font-body mt-1 leading-relaxed">
+                                  {hasQrTable
+                                    ? "You're all set! Your table has been automatically detected."
+                                    : "Order and enjoy your meal at your table"}
+                                </p>
+                              </div>
+                            </div>
+                          </motion.button>
+                        ) : (
+                          /* DISABLED — not at restaurant, dine-in off, no QR */
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.15, duration: 0.22 }}
+                            className="relative p-4 rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] cursor-not-allowed select-none"
+                            style={{ opacity: 0.62 }}
+                          >
+                            <div className="flex items-start gap-3.5">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-white/5">
+                                <UtensilsCrossed className="w-[18px] h-[18px] text-white/20" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                                  <span className="font-display font-bold text-sm text-white/35">Dine-In</span>
+                                  <motion.span
+                                    animate={{ opacity: [1, 0.5, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border border-amber-500/35 text-amber-400/80 leading-none"
+                                  >
+                                    📍 Location Only
+                                  </motion.span>
+                                </div>
+                                <p className="text-[11px] text-white/30 font-body">Sit and eat with us</p>
+                                <div className="mt-2.5 p-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+                                  <p className="text-[11px] text-white/40 font-body leading-relaxed">
+                                    📱 Scan the QR code on your table when you're at Foodieez Junction to unlock dine-in ordering
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+
                       </div>
                     </div>
                   )}
@@ -337,10 +440,20 @@ const OrderModal = () => {
                             </label>
                             <input
                               value={tableNo}
-                              onChange={(e) => setTableNo(e.target.value)}
+                              onChange={(e) => !hasQrTable && setTableNo(e.target.value)}
+                              readOnly={hasQrTable}
                               placeholder="e.g. 5"
-                              className="w-full px-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground font-body focus:border-primary focus:outline-none transition-colors"
+                              className={`w-full px-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground font-body focus:outline-none transition-colors ${
+                                hasQrTable
+                                  ? "cursor-default opacity-75 border-emerald-500/20 focus:border-emerald-500/20"
+                                  : "focus:border-primary"
+                              }`}
                             />
+                            {hasQrTable && (
+                              <p className="text-[11px] text-emerald-400 mt-1.5 flex items-center gap-1">
+                                <span>✅</span> Auto-filled from QR scan
+                              </p>
+                            )}
                           </div>
                         )}
                         <div>

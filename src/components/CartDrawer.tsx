@@ -22,6 +22,7 @@ const CartDrawer = () => {
     minimumOrderValue,
     remainingForMinimum,
     meetsMinimumOrder,
+    clearCart,
   } = useCart();
   const { isOpen } = useRestaurantStatus();
   const { settings } = useAppSettings();
@@ -89,12 +90,24 @@ const CartDrawer = () => {
                   )}
                 </div>
               </div>
+            {/* Clear All button — only when cart has items */}
+            <div className="flex items-center gap-2">
+              {totalItems > 0 && (
+                <button
+                  onClick={clearCart}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40 transition-all"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  Clear all
+                </button>
+              )}
               <button
                 onClick={() => setIsCartOpen(false)}
                 className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
             </div>
 
             {/* ── Items List ── */}
