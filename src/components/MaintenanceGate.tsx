@@ -22,7 +22,7 @@ export default function MaintenanceGate({
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4 text-foreground">
         <div className="rounded-3xl border border-white/10 bg-white/5 px-6 py-10 text-center backdrop-blur-xl">
-          <p className="text-sm text-white/60">Loading storefront settings...</p>
+          <p className="text-sm font-body tracking-wider text-white/50 animate-pulse">Loading...</p>
         </div>
       </div>
     );
