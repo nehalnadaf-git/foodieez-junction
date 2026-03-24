@@ -44,6 +44,7 @@ function mapToSettings(kv: Record<string, string>): AppSettings {
       orderIdPrefix: str("order.orderIdPrefix", d.order.orderIdPrefix),
       minimumOrderValue: num("order.minimumOrderValue", d.order.minimumOrderValue),
       maxQuantityPerItem: num("order.maxQuantityPerItem", d.order.maxQuantityPerItem),
+      dineInEnabled: bool("order.dineInEnabled", d.order.dineInEnabled),
     },
     upi: {
       upiId: str("upi.upiId", d.upi.upiId),

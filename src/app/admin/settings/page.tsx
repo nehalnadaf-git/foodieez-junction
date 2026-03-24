@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { SocialMediaLinks } from "@/components/admin/settings/SocialMediaLinks";
+import { DineInToggleCard } from "@/components/admin/settings/DineInToggleCard";
 
 type SettingsFormValues = {
   restaurantAddress: string;
@@ -104,6 +105,8 @@ export default function AdminSettingsPage() {
       </form>
 
       <SocialMediaLinks />
+
+      <DineInToggleCard />
     </motion.section>
   );
 }

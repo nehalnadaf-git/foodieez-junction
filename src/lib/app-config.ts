@@ -7,6 +7,7 @@ export interface OrderSettings {
   orderIdPrefix: string;
   minimumOrderValue: number;
   maxQuantityPerItem: number;
+  dineInEnabled: boolean;
 }
 
 export interface UpiSettings {
@@ -70,6 +71,7 @@ export const DEFAULT_ORDER_SETTINGS: OrderSettings = {
   orderIdPrefix: "FJ",
   minimumOrderValue: 80,
   maxQuantityPerItem: 10,
+  dineInEnabled: false,
 };
 
 export const DEFAULT_UPI_SETTINGS: UpiSettings = {

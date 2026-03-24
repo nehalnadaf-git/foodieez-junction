@@ -10,6 +10,7 @@ const DEFAULTS: Record<string, string> = {
   "order.orderIdPrefix": "FJ",
   "order.minimumOrderValue": "80",
   "order.maxQuantityPerItem": "10",
+  "order.dineInEnabled": "false",
   "upi.upiId": "nehalnadaf@ptyes",
   "upi.enableCash": "true",
   "upi.enableUpi": "true",

@@ -166,7 +166,7 @@ export function OfferEditor({ initialOffer, onSave, saveLabel = "Save Offer" }: 
 
       <div className="rounded-xl border border-white/10 bg-white/5 p-3">
         <p className="mb-2 text-xs uppercase tracking-[0.2em] text-white/45">Badge Preview</p>
-        <div className="relative h-12 rounded-lg border border-white/10 bg-black/20">
+        <div className="relative h-12">
           <OfferBadge offer={previewOffer} />
         </div>
       </div>

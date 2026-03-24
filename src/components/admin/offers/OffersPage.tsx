@@ -224,7 +224,7 @@ export function OffersPage() {
 
                   <div className="flex items-center gap-2">
                     {item.offer && (
-                      <div className="relative h-9 w-36 rounded-lg border border-white/10 bg-black/20">
+                      <div className="relative h-9 w-24">
                         <OfferBadge offer={item.offer} />
                       </div>
                     )}

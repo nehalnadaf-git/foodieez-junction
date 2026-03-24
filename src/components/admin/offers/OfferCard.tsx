@@ -36,7 +36,7 @@ export function OfferCard({ item, onToggleActive, onEdit, onRemove }: OfferCardP
           <div>
             <p className="font-semibold text-white">{item.name}</p>
             <p className="text-xs text-white/55">{item.category}</p>
-            <div className="relative mt-2 h-9 w-44 rounded-lg border border-white/10 bg-black/20">
+            <div className="relative mt-2 h-9 w-24">
               <OfferBadge offer={offer} />
             </div>
           </div>

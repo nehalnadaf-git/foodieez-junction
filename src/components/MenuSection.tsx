@@ -31,6 +31,7 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
     Boolean(item.offer) &&
     isOfferActive(item.offer) &&
     item.offer?.type === "percentage_off";
+  const hasActiveOffer = Boolean(item.offer) && isOfferActive(item.offer);
   const discountedPrice = hasDiscountOffer ? calculateDiscountedPrice(basePrice, item.offer) : basePrice;
   const hasImage = Boolean(item.image && item.image.trim().length > 0 && !imageError);
   const isOutOfStock = item.available === false;
@@ -89,7 +90,7 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
           overflow: "visible",
         }}
       >
-        <OfferBadge offer={item.offer} />
+        {/* OfferBadge is rendered inline next to price instead */}
         <div className="flex flex-col flex-1 p-[14px] pt-[70px] lg:pt-[88px] lg:pb-[18px]">
 
           {/* Item name + veg/nonveg dot */}
@@ -181,6 +182,13 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
               </p>
             )}
           </div>
+
+          {/* Offer badge — below the price, above Add To Cart */}
+          {hasActiveOffer && (
+            <div className="mb-2">
+              <OfferBadge offer={item.offer} inline />
+            </div>
+          )}
 
           {/* Add To Cart — always pinned to bottom */}
           <div style={{ marginTop: "auto" }}>

@@ -45,11 +45,11 @@ export function SaveButton({ hasUnsavedChanges, onSave, stagedItems }: SaveButto
     <AnimatePresence>
       {hasUnsavedChanges && (
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 40 }}
+          initial={{ opacity: 0, y: 40, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, x: "-50%" }}
+          exit={{ opacity: 0, y: 40, x: "-50%" }}
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
-          className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-[60] w-[calc(100%-2rem)] sm:w-auto px-2 sm:px-0"
+          className="fixed bottom-4 sm:bottom-6 left-1/2 z-[60] w-[90%] sm:w-auto px-2 sm:px-0"
         >
           <button
             onClick={handleSave}

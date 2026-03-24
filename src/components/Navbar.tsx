@@ -187,15 +187,6 @@ const Navbar = () => {
           {/* ── RIGHT: Actions (Search, Theme, Cart) ── */}
           <div className="flex items-center justify-end gap-1 md:gap-2">
 
-            {/* Search icon only */}
-            <button
-              onClick={() => setSearchOpen(true)}
-              aria-label="Open search"
-              className="p-2.5 rounded-xl transition-all duration-200 text-foreground/50 hover:text-primary hover:bg-primary/8"
-            >
-              <Search className="w-[17px] h-[17px]" />
-            </button>
-
             {/* Theme toggle */}
             <span className="hidden md:flex">
               <ThemeToggle />

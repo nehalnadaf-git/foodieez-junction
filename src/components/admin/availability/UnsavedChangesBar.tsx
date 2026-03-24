@@ -11,15 +11,15 @@ export function UnsavedChangesBar({ hasUnsavedChanges }: UnsavedChangesBarProps)
     <AnimatePresence>
       {hasUnsavedChanges && (
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: 20, x: "-50%" }}
+          animate={{ opacity: 1, y: 0, x: "-50%" }}
+          exit={{ opacity: 0, y: 20, x: "-50%" }}
           transition={{ type: "spring", stiffness: 350, damping: 25 }}
           className={cn(
-            "fixed top-16 sm:top-4 left-1/2 -translate-x-1/2 z-[60] px-3 sm:px-5 py-2.5 sm:py-3",
+            "fixed bottom-20 sm:bottom-24 left-1/2 z-[60] px-3 sm:px-5 py-2.5 sm:py-3",
             "rounded-2xl border border-[#FBA919]/50 bg-[#FBA919]/10 backdrop-blur-xl",
             "flex items-center gap-2 sm:gap-3 shadow-[0_8px_32px_rgba(251,169,25,0.25)]",
-            "w-[calc(100%-1rem)] sm:max-w-md"
+            "w-max max-w-[calc(100%-2rem)]"
           )}
         >
           <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#FBA919]/20 flex items-center justify-center shrink-0">
