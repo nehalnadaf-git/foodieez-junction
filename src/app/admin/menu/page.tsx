@@ -8,7 +8,6 @@ import {
   categories as defaultCategories,
   menuItems as defaultMenuItems,
   type Category,
-  type ItemOffer,
   type MenuItem,
 } from "@/data/menuData";
 import { useQuery, useMutation } from "convex/react";
@@ -36,6 +35,7 @@ import { ImageUploader } from "@/components/admin/menu/ImageUploader";
 import { OfferEditor } from "@/components/admin/offers/OfferEditor";
 import { getSortedCategories, reassignCategoryOrder, reorderAfterDelete } from "@/utils/categoryOrder";
 import { getOfferLabel } from "@/utils/offer";
+import { normalizeMenuItemOffer, toLegacyCatalogItems } from "@/utils/offerCompat";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -68,7 +68,8 @@ interface ItemFormState {
   price: string;
   priceSmall: string;
   priceLarge: string;
-  offer?: ItemOffer;
+  offerType: MenuItem["offerType"];
+  offerPercentage?: number;
 }
 
 const emptyCategoryForm: CategoryFormState = {
@@ -92,7 +93,8 @@ const emptyItemForm: ItemFormState = {
   price: "",
   priceSmall: "",
   priceLarge: "",
-  offer: undefined,
+  offerType: "none",
+  offerPercentage: undefined,
 };
 
 function slugify(value: string): string {
@@ -141,7 +143,8 @@ function toItemForm(item: MenuItem): ItemFormState {
     price: item.price?.toString() ?? "",
     priceSmall: item.priceSmall?.toString() ?? "",
     priceLarge: item.priceLarge?.toString() ?? "",
-    offer: item.offer,
+    offerType: item.offerType ?? "none",
+    offerPercentage: item.offerPercentage,
   };
 }
 
@@ -282,7 +285,7 @@ export default function AdminMenuPage() {
         dbItems = defaultMenuItems as any;
       }
       setCategories(dbCategories as any);
-      setItems(dbItems as any);
+      setItems((dbItems as Array<MenuItem & { offer?: any }>).map(normalizeMenuItemOffer));
       setIsLoaded(true);
     }
   }, [catalog, isLoaded]);
@@ -392,7 +395,17 @@ export default function AdminMenuPage() {
     try {
       await saveCatalog({ categories: nextCategories as any, items: nextItems });
     } catch (err) {
-      toast.error("Failed to sync with database: " + (err instanceof Error ? err.message : String(err)));
+      try {
+        await saveCatalog({
+          categories: nextCategories as any,
+          items: toLegacyCatalogItems(nextItems) as any,
+        });
+      } catch (fallbackErr) {
+        toast.error(
+          "Failed to sync with database: " +
+            (fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr))
+        );
+      }
     }
   };
 
@@ -489,7 +502,9 @@ export default function AdminMenuPage() {
       description: trimmedDescription || undefined,
       image: trimmedImage || undefined,
       imageSource: itemForm.imageSource,
-      offer: itemForm.offer,
+      offerType: itemForm.offerType ?? "none",
+      offerPercentage:
+        itemForm.offerType === "percentage" ? itemForm.offerPercentage : undefined,
       price: itemForm.priceMode === "single" ? price : undefined,
       priceSmall: itemForm.priceMode === "split" ? priceSmall : undefined,
       priceLarge: itemForm.priceMode === "split" ? priceLarge : undefined,
@@ -859,12 +874,24 @@ export default function AdminMenuPage() {
               <Accordion type="single" collapsible className="rounded-2xl border border-white/10 bg-white/5 px-4">
                 <AccordionItem value="offer" className="border-none">
                   <AccordionTrigger className="py-3 text-sm font-semibold text-white hover:no-underline">
-                    Offer & Discount
+                    Offer & Tag
                   </AccordionTrigger>
                   <AccordionContent>
                     <OfferEditor
-                      initialOffer={itemForm.offer}
-                      onSave={(offer) => setItemForm((current) => ({ ...current, offer }))}
+                      initialOfferType={itemForm.offerType ?? "none"}
+                      initialOfferPercentage={itemForm.offerPercentage}
+                      previewPrice={
+                        itemForm.priceMode === "single"
+                          ? Number(itemForm.price) || 0
+                          : Number(itemForm.priceSmall) || 0
+                      }
+                      onSave={(offer) =>
+                        setItemForm((current) => ({
+                          ...current,
+                          offerType: offer.offerType,
+                          offerPercentage: offer.offerPercentage,
+                        }))
+                      }
                       saveLabel="Apply Offer"
                     />
                   </AccordionContent>
@@ -932,9 +959,17 @@ export default function AdminMenuPage() {
                                       Special
                                     </span>
                                   )}
-                                  {item.offer && (
-                                    <span className="rounded-full bg-primary/20 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">
-                                      {getOfferLabel(item.offer)}
+                                  {item.offerType && item.offerType !== "none" && (
+                                    <span
+                                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-[0.08em] ${
+                                        item.offerType === "bogo"
+                                          ? "bg-[#FFC200] text-black"
+                                          : item.offerType === "percentage"
+                                            ? "bg-emerald-500 text-white"
+                                            : "bg-blue-500 text-white"
+                                      }`}
+                                    >
+                                      {getOfferLabel(item)}
                                     </span>
                                   )}
                                 </div>

@@ -1,22 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { Clock3, Pencil, Trash2, UtensilsCrossed } from "lucide-react";
+import { Pencil, Trash2, UtensilsCrossed } from "lucide-react";
 import type { MenuItem } from "@/data/menuData";
-import { Switch } from "@/components/ui/switch";
 import { OfferBadge } from "@/components/menu/OfferBadge";
 import { getOfferLabel } from "@/utils/offer";
 
 interface OfferCardProps {
   item: MenuItem;
-  onToggleActive: (itemId: string, active: boolean) => void;
   onEdit: (item: MenuItem) => void;
   onRemove: (item: MenuItem) => void;
 }
 
-export function OfferCard({ item, onToggleActive, onEdit, onRemove }: OfferCardProps) {
-  const offer = item.offer;
-  if (!offer) {
+export function OfferCard({ item, onEdit, onRemove }: OfferCardProps) {
+  if (!item.offerType || item.offerType === "none") {
     return null;
   }
 
@@ -33,31 +30,20 @@ export function OfferCard({ item, onToggleActive, onEdit, onRemove }: OfferCardP
               </div>
             )}
           </div>
-          <div>
+            <div>
             <p className="font-semibold text-white">{item.name}</p>
             <p className="text-xs text-white/55">{item.category}</p>
-            <div className="relative mt-2 h-9 w-24">
-              <OfferBadge offer={offer} />
+            <div className="mt-1.5">
+              <OfferBadge item={item} variant="inline" />
             </div>
           </div>
         </div>
 
         <div className="grid gap-2 text-sm text-white/75 md:text-right">
-          <p className="font-semibold text-white/90">{getOfferLabel(offer)}</p>
-          <p className="inline-flex items-center gap-1 text-xs text-white/55 md:justify-end">
-            <Clock3 className="h-3.5 w-3.5" />
-            {offer.expiresAt ? new Date(offer.expiresAt).toLocaleString() : "No Expiry"}
-          </p>
-          <div className="inline-flex items-center gap-2 md:justify-end">
-            <Switch
-              checked={offer.active}
-              onCheckedChange={(checked) => onToggleActive(item.id, checked)}
-              className="data-[state=checked]:bg-primary"
-            />
-            <span className="text-xs uppercase tracking-[0.15em] text-white/50">
-              {offer.active ? "Active" : "Inactive"}
-            </span>
-          </div>
+          <p className="font-semibold text-white/90">{getOfferLabel(item)}</p>
+          {item.offerType === "percentage" && (
+            <p className="text-xs text-white/55">Discount: {Math.round(item.offerPercentage ?? 0)}%</p>
+          )}
         </div>
       </div>
 

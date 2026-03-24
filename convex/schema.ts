@@ -38,15 +38,15 @@ export default defineSchema({
     ),
     available: v.boolean(),
     isSpecial: v.boolean(),
-    offer: v.optional(
-      v.object({
-        type: v.string(),
-        value: v.optional(v.number()),
-        customText: v.optional(v.string()),
-        active: v.boolean(),
-        expiresAt: v.optional(v.string()),
-      })
+    offerType: v.optional(
+      v.union(
+        v.literal("bogo"),
+        v.literal("percentage"),
+        v.literal("new_tag"),
+        v.literal("none")
+      )
     ),
+    offerPercentage: v.optional(v.number()),
     image: v.optional(v.string()),
     imageSource: v.optional(v.union(v.literal("upload"), v.literal("url"))),
     imageScale: v.optional(v.number()),

@@ -28,7 +28,8 @@ export const getCatalog = query({
         sizes: i.sizes,
         available: i.available,
         isSpecial: i.isSpecial,
-        offer: i.offer,
+        offerType: i.offerType ?? "none",
+        offerPercentage: i.offerPercentage,
         image: i.image,
         imageSource: i.imageSource,
         imageScale: i.imageScale,
@@ -69,15 +70,15 @@ export const saveCatalog = mutation({
         ),
         available: v.optional(v.boolean()),
         isSpecial: v.optional(v.boolean()),
-        offer: v.optional(
-          v.object({
-            type: v.string(),
-            value: v.optional(v.number()),
-            customText: v.optional(v.string()),
-            active: v.boolean(),
-            expiresAt: v.optional(v.string()),
-          })
+        offerType: v.optional(
+          v.union(
+            v.literal("bogo"),
+            v.literal("percentage"),
+            v.literal("new_tag"),
+            v.literal("none")
+          )
         ),
+        offerPercentage: v.optional(v.number()),
         image: v.optional(v.string()),
         imageSource: v.optional(v.union(v.literal("upload"), v.literal("url"))),
         imageScale: v.optional(v.number()),
@@ -121,7 +122,8 @@ export const saveCatalog = mutation({
         sizes: item.sizes,
         available: item.available ?? true,
         isSpecial: item.isSpecial ?? false,
-        offer: item.offer,
+        offerType: item.offerType ?? "none",
+        offerPercentage: item.offerPercentage,
         image: item.image,
         imageSource: item.imageSource,
         imageScale: item.imageScale,

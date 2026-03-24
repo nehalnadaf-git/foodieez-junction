@@ -8,6 +8,7 @@ import {
   type Category,
   type MenuItem,
 } from "@/data/menuData";
+import { normalizeMenuItemOffer } from "@/utils/offerCompat";
 
 interface MenuCatalogState {
   categories: Category[];
@@ -27,6 +28,6 @@ export function useMenuCatalog(): MenuCatalogState {
 
   return {
     categories: catalog.categories as Category[],
-    menuItems: catalog.items as MenuItem[],
+    menuItems: (catalog.items as Array<MenuItem & { offer?: any }>).map(normalizeMenuItemOffer),
   };
 }

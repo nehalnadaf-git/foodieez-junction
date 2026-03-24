@@ -6,7 +6,6 @@ import { AlertTriangle, Tag, CheckCircle2, XCircle, LayoutGrid } from "lucide-re
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import { useAvailability } from "@/hooks/useAvailability";
-import { isOfferActive } from "@/utils/offer";
 import { RestaurantStatusCard } from "@/components/admin/dashboard/RestaurantStatusCard";
 
 const statCardClass =
@@ -17,27 +16,8 @@ export default function AdminDashboardPage() {
   const { menuItems } = useMenuCatalog();
   const { availableCount, unavailableCount, totalCount, availabilityPercentage } = useAvailability();
 
-  const activeOfferItems = menuItems.filter((item) => item.offer && isOfferActive(item.offer));
-  const expiringSoonItems = activeOfferItems
-    .filter((item) => {
-      if (!item.offer?.expiresAt) {
-        return false;
-      }
-
-      const expiresAt = new Date(item.offer.expiresAt).getTime();
-      const now = Date.now();
-      const twoHours = 2 * 60 * 60 * 1000;
-      return expiresAt > now && expiresAt - now <= twoHours;
-    })
-    .map((item) => {
-      const expiresAt = item.offer?.expiresAt ? new Date(item.offer.expiresAt).getTime() : Date.now();
-      const hoursLeft = Math.max(0.1, (expiresAt - Date.now()) / (60 * 60 * 1000));
-      return {
-        id: item.id,
-        name: item.name,
-        hoursLeft,
-      };
-    });
+  const activeOfferItems = menuItems.filter((item) => (item.offerType ?? "none") !== "none");
+  const expiringSoonItems: Array<{ id: string; name: string; hoursLeft: number }> = [];
 
   return (
     <motion.section

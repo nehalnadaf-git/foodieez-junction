@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
-import { useCart, getItemPrice } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRestaurantStatus } from "@/hooks/useRestaurantStatus";
 import { useAppSettings } from "@/context/AppSettingsContext";
@@ -14,7 +14,9 @@ const CartDrawer = () => {
     setIsCartOpen,
     updateQuantity,
     removeItem,
-    totalPrice,
+    subtotal,
+    totalSavings,
+    grandTotal,
     totalItems,
     maxQuantityPerItem,
     minimumOrderValue,
@@ -128,11 +130,10 @@ const CartDrawer = () => {
               ) : (
                 <AnimatePresence initial={false}>
                   {items.map((ci) => {
-                    const price = getItemPrice(ci.item, ci.size);
-                    const isVeg = ci.item.isVeg;
+                    const isVeg = ci.isVeg;
                     return (
                       <motion.div
-                        key={`${ci.item.id}-${ci.size}`}
+                        key={ci.id}
                         layout
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -165,17 +166,34 @@ const CartDrawer = () => {
 
                           <div className="flex-1 min-w-0">
                             <p className="text-[15px] font-bold text-foreground leading-snug">
-                              {ci.item.name}
+                              {ci.name}
                             </p>
                             {ci.size !== "single" && (
                               <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-widest mt-0.5">
                                 {ci.size === "small" ? "Small Portion" : "Large Portion"}
                               </p>
                             )}
+                            {ci.offerType !== "none" && (
+                              <p className="mt-1 text-xs font-semibold text-primary">{ci.offerLabel}</p>
+                            )}
+                            {ci.offerType === "percentage" && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                <span className="line-through mr-1">Rs.{ci.originalPrice}</span>
+                                <span>Rs.{ci.finalPrice}</span>
+                              </p>
+                            )}
+                            {ci.offerType === "bogo" && (
+                              <p className="mt-1 text-xs text-muted-foreground">
+                                Qty: {ci.quantity} (Billed: {ci.billedQuantity})
+                              </p>
+                            )}
+                            {ci.savings > 0 && (
+                              <p className="mt-1 text-xs font-semibold text-emerald-400">You save Rs.{ci.savings}</p>
+                            )}
                           </div>
 
                           <button
-                            onClick={() => removeItem(ci.item.id, ci.size)}
+                            onClick={() => removeItem(ci.itemId, ci.size)}
                             className="w-8 h-8 rounded-full flex items-center justify-center text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -193,7 +211,7 @@ const CartDrawer = () => {
                           >
                             <button
                               onClick={() =>
-                                updateQuantity(ci.item.id, ci.size, ci.quantity - 1)
+                                updateQuantity(ci.itemId, ci.size, ci.quantity - 1)
                               }
                               className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
                             >
@@ -204,7 +222,7 @@ const CartDrawer = () => {
                             </span>
                             <button
                               onClick={() =>
-                                updateQuantity(ci.item.id, ci.size, ci.quantity + 1)
+                                updateQuantity(ci.itemId, ci.size, ci.quantity + 1)
                               }
                               disabled={ci.quantity >= maxQuantityPerItem}
                               className="w-7 h-7 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-30 disabled:cursor-not-allowed"
@@ -215,10 +233,10 @@ const CartDrawer = () => {
 
                           <div className="text-right">
                             <p className="text-xs text-muted-foreground font-medium mb-0.5">
-                              ₹{price} × {ci.quantity}
+                              Rs.{ci.finalPrice} x {ci.billedQuantity}
                             </p>
                             <p className="text-[15px] font-bold text-primary">
-                              ₹{price * ci.quantity}
+                              Rs.{ci.itemTotal}
                             </p>
                           </div>
                         </div>
@@ -253,17 +271,19 @@ const CartDrawer = () => {
 
 
 
-                {/* Subtotal row */}
-                <div className="flex items-center justify-between px-1">
-                  <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-                    Subtotal
-                  </span>
-                  <span
-                    className="text-2xl font-display font-bold"
-                    style={{ color: "hsl(var(--primary))" }}
-                  >
-                    ₹{totalPrice}
-                  </span>
+                <div className="space-y-1 rounded-xl border border-foreground/10 bg-foreground/5 px-3 py-3">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Subtotal</span>
+                    <span>Rs.{subtotal}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>Total Savings</span>
+                    <span>Rs.{totalSavings}</span>
+                  </div>
+                  <div className="mt-1 border-t border-foreground/10 pt-2 flex items-center justify-between">
+                    <span className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Total</span>
+                    <span className="text-xl font-display font-bold text-primary">Rs.{grandTotal}</span>
+                  </div>
                 </div>
 
                 {/* Place Order CTA */}

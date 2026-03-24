@@ -1,14 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { X, Check, ShoppingBag, UtensilsCrossed } from "lucide-react";
+import { X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCart, getItemPrice } from "@/context/CartContext";
+import { useCart } from "@/context/CartContext";
+import type { CartItem } from "@/context/CartContext";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useTableNumber } from "@/hooks/useTableNumber";
 import { generateOrderToken } from "@/utils/order";
-import { buildWhatsAppMessage, buildWhatsAppUrl } from "@/utils/whatsapp";
-import { calculateDiscountedPrice, isOfferActive } from "@/utils/offer";
+import { buildWhatsAppMessage, buildWhatsAppUrl } from "../utils/whatsapp";
+import type { WhatsAppLineItem } from "../utils/whatsapp";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
@@ -16,16 +17,9 @@ type OrderType = "dine-in" | "takeaway" | null;
 type PaymentMethod = "cash" | "upi" | null;
 
 const OrderModal = () => {
-  const { items, totalPrice, clearCart } = useCart();
+  const { items, grandTotal, subtotal, totalSavings, clearCart } = useCart();
   const { settings } = useAppSettings();
   const { tableNumber: scannedTableNumber } = useTableNumber();
-
-  // ── Dine-In control logic ──────────────────────────────────────────────────
-  const dineInEnabled = settings.order.dineInEnabled;
-  const isQRScan = !!scannedTableNumber;
-  // Dine-in unlocked if: admin turned it ON for everyone, OR customer scanned QR
-  const isDineInUnlocked = isQRScan || dineInEnabled;
-  // ──────────────────────────────────────────────────────────────────────────
 
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
@@ -42,34 +36,31 @@ const OrderModal = () => {
     const methods: PaymentMethod[] = [];
     if (settings.upi.enableCash) methods.push("cash");
     if (settings.upi.enableUpi) methods.push("upi");
+    // Always fall back to cash so there's at least one option
     if (methods.length === 0) methods.push("cash");
     return methods;
   }, [settings.upi.enableCash, settings.upi.enableUpi]);
 
   useEffect(() => {
     const handler = () => {
+      // Reset every field cleanly every time the modal is opened
       setIsOpen(true);
-      setStep(1); // Always start at step 1 — both cards always shown
-      // Pre-select dine-in when QR detected, but customer still sees the screen
-      if (isQRScan) {
-        setOrderType("dine-in");
-        setTableNo(scannedTableNumber ?? "");
-      } else {
-        setOrderType(null);
-        setTableNo("");
-      }
+      setStep(1);
+      setOrderType(scannedTableNumber ? "dine-in" : null);
       setName("");
+      setTableNo(scannedTableNumber ?? "");
       setPayment(availablePayments[0] ?? "cash");
       setSpecialInstructions("");
       setOrderId(generateOrderToken(settings.order.orderIdPrefix));
       setShowSuccess(false);
-      setIsSubmitting(false);
+      setIsSubmitting(false); // ← always clear submitting lock on open
     };
 
     window.addEventListener("open-order-modal", handler);
     return () => window.removeEventListener("open-order-modal", handler);
-  }, [availablePayments, scannedTableNumber, settings.order.orderIdPrefix, isQRScan]);
+  }, [availablePayments, scannedTableNumber, settings.order.orderIdPrefix]);
 
+  // Don't allow backdrop close while order is in-flight or success is shown
   const close = useCallback(() => {
     if (isSubmitting) return;
     setIsOpen(false);
@@ -87,12 +78,13 @@ const OrderModal = () => {
     return true;
   }, [step, orderType, name, tableNo, payment]);
 
-  // Step 1 always shown → always 4 steps max (3 if single payment method)
+  // If only one payment method is available, skip step 3 automatically
   const totalSteps = availablePayments.length === 1 ? 3 : 4;
-  const isLastStep = step === 4;
+  const isLastStep = step === totalSteps;
 
   const goNext = useCallback(() => {
     if (!canProceed()) return;
+    // If we're on step 2 and only one payment exists, skip step 3
     if (step === 2 && availablePayments.length === 1) {
       setStep(4);
     } else {
@@ -101,7 +93,7 @@ const OrderModal = () => {
   }, [canProceed, step, availablePayments.length]);
 
   const goBack = useCallback(() => {
-    if (step <= 1) return;
+    // If we're on step 4 and skipped step 3, go back to step 2
     if (step === 4 && availablePayments.length === 1) {
       setStep(2);
     } else {
@@ -116,34 +108,28 @@ const OrderModal = () => {
 
     setIsSubmitting(true);
 
-    const orderItems = items.map((cartItem) => {
-      const baseUnitPrice =
-        cartItem.size === "small" && cartItem.item.priceSmall
-          ? cartItem.item.priceSmall
-          : cartItem.size === "large" && cartItem.item.priceLarge
-            ? cartItem.item.priceLarge
-            : cartItem.item.price || 0;
-      const unitPrice = getItemPrice(cartItem.item, cartItem.size);
-      const sizeSuffix =
-        cartItem.size === "single"
-          ? ""
-          : ` (${cartItem.size === "small" ? "S" : "L"})`;
-
+    const orderItems: WhatsAppLineItem[] = items.map((cartItem: CartItem) => {
       return {
-        name: `${cartItem.item.name}${sizeSuffix}`,
-        itemId: cartItem.item.id,
+        name: cartItem.name,
+        itemId: cartItem.itemId,
         size: cartItem.size,
         quantity: cartItem.quantity,
-        price: unitPrice,
-        originalAmount: baseUnitPrice * cartItem.quantity,
-        offer: cartItem.item.offer,
+        billedQuantity: cartItem.billedQuantity,
+        originalPrice: cartItem.originalPrice,
+        finalPrice: cartItem.finalPrice,
+        itemTotal: cartItem.itemTotal,
+        savings: cartItem.savings,
+        offerType: cartItem.offerType,
+        offerPercentage: cartItem.offerPercentage,
       };
     });
 
     const message = buildWhatsAppMessage({
       orderId,
       items: orderItems,
-      totalAmount: totalPrice,
+      subtotal,
+      totalSavings,
+      totalAmount: grandTotal,
       customerName: name.trim(),
       orderType,
       tableNumber: orderType === "dine-in" ? tableNo.trim() : null,
@@ -177,14 +163,14 @@ const OrderModal = () => {
       tableNumber: orderType === "dine-in" ? tableNo.trim() : undefined,
       paymentMethod: payment,
       specialInstructions: specialInstructions.trim() || undefined,
-      items: orderItems.map((item) => ({
+      items: orderItems.map((item: WhatsAppLineItem) => ({
         name: item.name,
         itemId: item.itemId,
         size: item.size,
         quantity: item.quantity,
-        price: item.price,
+        price: item.finalPrice,
       })),
-      totalAmount: totalPrice,
+      totalAmount: grandTotal,
       status: "pending",
     }).catch((e) => {
       console.error("Failed to save order to database:", e);
@@ -201,7 +187,9 @@ const OrderModal = () => {
     orderId,
     isSubmitting,
     items,
-    totalPrice,
+    subtotal,
+    totalSavings,
+    grandTotal,
     name,
     tableNo,
     scannedTableNumber,
@@ -211,9 +199,11 @@ const OrderModal = () => {
     clearCart,
   ]);
 
-  // Progress bar — step 1 always visible, so always totalSteps segments
-  const stepSegments = Array.from({ length: totalSteps }, (_, i) => i + 1);
-  const visualStep = step === 4 && availablePayments.length === 1 ? totalSteps : step;
+  // Progress bar segments: show the actual step count (3 or 4)
+  const stepSegments = totalSteps === 3 ? [1, 2, 3] : [1, 2, 3, 4];
+  // Map display step to visual progress (when step 3 is skipped, step 4 = full)
+  const visualStep =
+    totalSteps === 3 && step === 4 ? 3 : step;
 
   return (
     <AnimatePresence>
@@ -275,122 +265,46 @@ const OrderModal = () => {
                   </div>
 
                   {/* ── Step 1: Order Type ── */}
-                  {/* ── Step 1: Order Type — always shows BOTH cards ── */}
                   {step === 1 && (
                     <div>
-                      <h3 className="text-2xl font-display text-foreground tracking-wider mb-1">
-                        How would you like your order?
+                      <h3 className="text-2xl font-display text-foreground tracking-wider mb-6">
+                        How would you like it? 🍽️
                       </h3>
-                      <p className="text-sm text-muted-foreground font-body mb-5">Choose your preferred ordering method</p>
-
-                      <div className="flex flex-col gap-3">
-
-                        {/* ── Takeaway card — always active ── */}
-                        <motion.button
-                          initial={{ opacity: 0, y: 14 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0, duration: 0.28 }}
-                          onClick={() => setOrderType("takeaway")}
-                          className={`relative text-left glass p-4 rounded-xl transition-all duration-200 ${
-                            orderType === "takeaway"
-                              ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.18)]"
-                              : "hover:border-primary/30 border border-white/10"
-                          }`}
-                        >
-                          {orderType === "takeaway" && (
-                            <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                              <Check className="w-3.5 h-3.5 text-black stroke-[3px]" />
-                            </div>
-                          )}
-                          <div className="flex items-start gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center shrink-0">
-                              <ShoppingBag className="w-5 h-5 text-emerald-400" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className="font-heading font-bold text-sm text-foreground">Takeaway</span>
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">Always Available</span>
+                      {scannedTableNumber && (
+                        <p className="text-xs text-primary font-heading mb-4">
+                          QR table detected: Table {scannedTableNumber}. You
+                          can still switch to takeaway.
+                        </p>
+                      )}
+                      <div className="grid grid-cols-2 gap-4">
+                        {(["dine-in", "takeaway"] as const).map((type) => (
+                          <button
+                            key={type}
+                            onClick={() => {
+                              setOrderType(type);
+                              // Auto-fill table number when switching to dine-in with a QR scan
+                              if (type === "dine-in" && scannedTableNumber) {
+                                setTableNo(scannedTableNumber);
+                              }
+                            }}
+                            className={`relative glass p-6 text-center transition-all rounded-xl ${orderType === type
+                              ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]"
+                              : "hover:border-primary/30"
+                              }`}
+                          >
+                            {orderType === type && (
+                              <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                                <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
                               </div>
-                              <p className="text-xs text-muted-foreground">Pack and carry</p>
-                              <p className="text-xs text-muted-foreground/70 mt-0.5">Order from anywhere and pick up at our counter</p>
-                            </div>
-                          </div>
-                        </motion.button>
-
-                        {/* ── Dine-In card — locked or unlocked ── */}
-                        <motion.div
-                          initial={{ opacity: 0, y: 14 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: 0.12, duration: 0.28 }}
-                          onClick={() => isDineInUnlocked && setOrderType("dine-in")}
-                          className={`relative text-left rounded-xl transition-all duration-200 ${
-                            isDineInUnlocked
-                              ? `glass p-4 cursor-pointer border ${
-                                  orderType === "dine-in"
-                                    ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.18)]"
-                                    : "border-white/10 hover:border-primary/30"
-                                }`
-                              : "p-4 cursor-not-allowed opacity-60 border border-dashed border-white/20 bg-white/[0.03]"
-                          }`}
-                        >
-                          {isDineInUnlocked && orderType === "dine-in" && (
-                            <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center">
-                              <Check className="w-3.5 h-3.5 text-black stroke-[3px]" />
-                            </div>
-                          )}
-
-                          <div className="flex items-start gap-3">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                              isDineInUnlocked
-                                ? "bg-primary/15 border border-primary/25"
-                                : "bg-white/5 border border-white/10"
-                            }`}>
-                              <UtensilsCrossed className={`w-5 h-5 ${
-                                isDineInUnlocked ? "text-primary" : "text-white/30"
-                              }`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                <span className={`font-heading font-bold text-sm ${
-                                  isDineInUnlocked ? "text-foreground" : "text-white/40"
-                                }`}>Dine-In</span>
-                                {isDineInUnlocked ? (
-                                  isQRScan ? (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
-                                      ✅ Table {scannedTableNumber} Detected
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-                                      Available
-                                    </span>
-                                  )
-                                ) : (
-                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border border-white/15 text-white/35">
-                                    📍 Location Only
-                                  </span>
-                                )}
-                              </div>
-                              <p className={`text-xs ${
-                                isDineInUnlocked ? "text-muted-foreground" : "text-white/30"
-                              }`}>Sit and eat with us</p>
-
-                              {isDineInUnlocked ? (
-                                isQRScan && (
-                                  <p className="text-xs text-muted-foreground/70 mt-0.5">
-                                    You&apos;re all set! Your table has been automatically detected.
-                                  </p>
-                                )
-                              ) : (
-                                <div className="mt-2 rounded-lg bg-white/5 border border-white/10 px-3 py-2">
-                                  <p className="text-[11px] text-white/40 leading-relaxed">
-                                    📱 Scan the QR code on your table when you&apos;re at Foodieez Junction to unlock dine-in ordering
-                                  </p>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </motion.div>
-
+                            )}
+                            <span className="text-3xl block mb-2">
+                              {type === "dine-in" ? "🪑" : "📦"}
+                            </span>
+                            <span className="font-heading font-bold text-sm text-foreground uppercase">
+                              {type === "dine-in" ? "Dine-In" : "Takeaway"}
+                            </span>
+                          </button>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -398,18 +312,9 @@ const OrderModal = () => {
                   {/* ── Step 2: Customer Details ── */}
                   {step === 2 && (
                     <div>
-                      <h3 className="text-2xl font-display text-foreground tracking-wider mb-1">
+                      <h3 className="text-2xl font-display text-foreground tracking-wider mb-6">
                         Your Details 📝
                       </h3>
-                      {isQRScan && orderType === "dine-in" && (
-                        <p className="text-xs text-primary font-heading mb-5 mt-1">
-                          🪑 Ordering for Table {scannedTableNumber}
-                        </p>
-                      )}
-                      {orderType === "takeaway" && (
-                        <p className="text-xs text-muted-foreground font-heading mb-5 mt-1">📦 Takeaway Order</p>
-                      )}
-                      {orderType === "dine-in" && !isQRScan && <div className="mb-5" />}
                       <div className="space-y-4">
                         <div>
                           <label className="text-xs font-heading font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
@@ -425,8 +330,7 @@ const OrderModal = () => {
                             className="w-full px-4 py-3 rounded-lg bg-input border border-primary/10 text-foreground font-body focus:border-primary focus:outline-none transition-colors"
                           />
                         </div>
-                        {/* Table number: shown for dine-in; read-only (hidden from input) if QR-scanned */}
-                        {orderType === "dine-in" && !isQRScan && (
+                        {orderType === "dine-in" && (
                           <div>
                             <label className="text-xs font-heading font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
                               Table Number *
@@ -565,48 +469,19 @@ const OrderModal = () => {
 
                         {/* Items list — scrollable so it doesn't overflow on small screens */}
                         <div className="border-t border-primary/10 pt-2 mt-1 max-h-40 overflow-y-auto space-y-0.5 pr-1">
-                          {items.map((cartItem) => {
-                            const unitPrice = getItemPrice(
-                              cartItem.item,
-                              cartItem.size
-                            );
-                            const baseUnitPrice =
-                              cartItem.size === "small" &&
-                                cartItem.item.priceSmall
-                                ? cartItem.item.priceSmall
-                                : cartItem.size === "large" &&
-                                  cartItem.item.priceLarge
-                                  ? cartItem.item.priceLarge
-                                  : cartItem.item.price || 0;
-                            const hasDiscount =
-                              Boolean(cartItem.item.offer) &&
-                              isOfferActive(cartItem.item.offer) &&
-                              cartItem.item.offer?.type === "percentage_off" &&
-                              calculateDiscountedPrice(
-                                baseUnitPrice,
-                                cartItem.item.offer
-                              ) !== baseUnitPrice;
-
+                          {items.map((cartItem: CartItem) => {
                             return (
                               <p
-                                key={`${cartItem.item.id}-${cartItem.size}`}
+                                key={cartItem.id}
                                 className="text-foreground/80"
                               >
-                                {cartItem.item.name}
+                                {cartItem.name}
                                 {cartItem.size !== "single" &&
                                   ` (${cartItem.size === "small" ? "S" : "L"})`}{" "}
-                                ×{cartItem.quantity} —{" "}
-                                {hasDiscount ? (
-                                  <>
-                                    <span className="text-foreground/40 line-through mr-1">
-                                      ₹{baseUnitPrice * cartItem.quantity}
-                                    </span>
-                                    <span className="text-primary">
-                                      ₹{unitPrice * cartItem.quantity}
-                                    </span>
-                                  </>
-                                ) : (
-                                  `₹${unitPrice * cartItem.quantity}`
+                                ×{cartItem.quantity} — 
+                                <span className="text-primary">Rs.{cartItem.itemTotal}</span>
+                                {cartItem.offerType === "bogo" && (
+                                  <span className="text-foreground/60"> (Billed: {cartItem.billedQuantity})</span>
                                 )}
                               </p>
                             );
@@ -615,7 +490,7 @@ const OrderModal = () => {
 
                         {/* Total */}
                         <p className="text-lg font-display text-primary tracking-wider pt-2 border-t border-primary/10 mt-1">
-                          Total: ₹{totalPrice}
+                          Total: Rs.{grandTotal}
                         </p>
                       </div>
 

@@ -6,7 +6,6 @@ import React, {
   useState,
   useCallback,
   useEffect,
-  useMemo,
 } from "react";
 import { toast } from "sonner";
 import { useAppSettings } from "@/context/AppSettingsContext";
@@ -17,29 +16,27 @@ import {
   removeFromStorage,
   saveToStorage,
 } from "@/utils/storage";
-import { calculateDiscountedPrice, isOfferActive } from "@/utils/offer";
-import type { ItemOffer } from "@/data/menuData";
-
-export interface MenuItem {
-  id: string;
-  name: string;
-  category: string;
-  isVeg: boolean;
-  description?: string;
-  price?: number;
-  priceSmall?: number;
-  priceLarge?: number;
-  image?: string;
-  imageSource?: "upload" | "url";
-  available?: boolean;
-  isSpecial?: boolean;
-  offer?: ItemOffer;
-}
+import type { MenuItem, OfferType } from "@/data/menuData";
+import { getPricingForItem } from "@/utils/offer";
 
 export interface CartItem {
-  item: MenuItem;
-  quantity: number;
+  id: string;
+  itemId: string;
+  name: string;
+  category: string;
   size: "small" | "large" | "single";
+  originalPrice: number;
+  finalPrice: number;
+  quantity: number;
+  billedQuantity: number;
+  offerType: OfferType;
+  offerPercentage?: number;
+  offerLabel: string;
+  itemTotal: number;
+  savings: number;
+  image?: string;
+  isVeg: boolean;
+  item: MenuItem;
 }
 
 interface CartContextType {
@@ -50,6 +47,9 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
+  subtotal: number;
+  totalSavings: number;
+  grandTotal: number;
   isCartOpen: boolean;
   setIsCartOpen: (open: boolean) => void;
   justAdded: boolean;
@@ -67,23 +67,57 @@ export const useCart = () => {
   return ctx;
 };
 
+export const getBasePrice = (
+  item: MenuItem,
+  size: "small" | "large" | "single"
+) => {
+  if (size === "small" && item.priceSmall) {
+    return Math.round(item.priceSmall);
+  }
+
+  if (size === "large" && item.priceLarge) {
+    return Math.round(item.priceLarge);
+  }
+
+  return Math.round(item.price ?? item.priceSmall ?? item.priceLarge ?? 0);
+};
+
 export const getItemPrice = (
   item: MenuItem,
   size: "small" | "large" | "single"
 ) => {
-  const basePrice =
-    size === "small" && item.priceSmall
-      ? item.priceSmall
-      : size === "large" && item.priceLarge
-        ? item.priceLarge
-        : item.price || 0;
-
-  if (!item.offer || !isOfferActive(item.offer)) {
-    return basePrice;
-  }
-
-  return calculateDiscountedPrice(basePrice, item.offer);
+  const basePrice = getBasePrice(item, size);
+  return getPricingForItem(item, basePrice, 1).finalPrice;
 };
+
+function toCartItem(
+  item: MenuItem,
+  size: "small" | "large" | "single",
+  quantity: number
+): CartItem {
+  const basePrice = getBasePrice(item, size);
+  const pricing = getPricingForItem(item, basePrice, quantity);
+
+  return {
+    id: `${item.id}-${size}`,
+    itemId: item.id,
+    name: item.name,
+    category: item.category,
+    size,
+    originalPrice: pricing.originalPrice,
+    finalPrice: pricing.finalPrice,
+    quantity: pricing.quantity,
+    billedQuantity: pricing.billedQuantity,
+    offerType: pricing.offerType,
+    offerPercentage: pricing.offerPercentage,
+    offerLabel: pricing.offerLabel,
+    itemTotal: pricing.itemTotal,
+    savings: pricing.savings,
+    image: item.image,
+    isVeg: item.isVeg,
+    item,
+  };
+}
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -99,7 +133,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const minimumOrderValue = settings.order.minimumOrderValue;
 
   useEffect(() => {
-    const persisted = loadFromStorage<{ items: CartItem[]; updatedAt: number } | null>(
+    const persisted = loadFromStorage<{ items: unknown[]; updatedAt: number } | null>(
       STORAGE_KEYS.cart,
       null
     );
@@ -116,10 +150,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
-    if (persisted.items.length > 0) {
-      setItems(persisted.items);
-      toast.success("Your previous cart has been restored");
+    if (Array.isArray(persisted.items) && persisted.items.length > 0) {
+      const restored = persisted.items.filter((entry): entry is CartItem => {
+        if (!entry || typeof entry !== "object") {
+          return false;
+        }
+
+        const e = entry as Partial<CartItem>;
+        return (
+          typeof e.id === "string" &&
+          typeof e.itemId === "string" &&
+          typeof e.name === "string" &&
+          typeof e.quantity === "number" &&
+          typeof e.billedQuantity === "number" &&
+          typeof e.itemTotal === "number" &&
+          typeof e.finalPrice === "number" &&
+          typeof e.originalPrice === "number" &&
+          e.item !== undefined
+        );
+      });
+
+      if (restored.length > 0) {
+        setItems(restored);
+        toast.success("Your previous cart has been restored");
+      }
     }
+
     setIsHydrated(true);
   }, []);
 
@@ -137,25 +193,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const addItem = useCallback(
     (item: MenuItem, size: "small" | "large" | "single") => {
       setItems((prev) => {
-        const existing = prev.find(
-          (ci) => ci.item.id === item.id && ci.size === size
-        );
+        const existing = prev.find((ci) => ci.itemId === item.id && ci.size === size);
+        const isBogo = item.offerType === "bogo";
+
         if (existing) {
-          if (existing.quantity >= maxQuantityPerItem) {
-            toast.error(
-              `Maximum ${maxQuantityPerItem} of this item allowed per order`
-            );
+          const nextQuantity = existing.quantity + (isBogo ? 2 : 1);
+          if (nextQuantity > maxQuantityPerItem) {
+            toast.error(`Maximum ${maxQuantityPerItem} of this item allowed per order`);
             return prev;
           }
 
           return prev.map((ci) =>
-            ci.item.id === item.id && ci.size === size
-              ? { ...ci, quantity: ci.quantity + 1 }
+            ci.itemId === item.id && ci.size === size
+              ? toCartItem(item, size, nextQuantity)
               : ci
           );
         }
-        return [...prev, { item, quantity: 1, size }];
+
+        const initialQuantity = isBogo ? 2 : 1;
+        return [...prev, toCartItem(item, size, initialQuantity)];
       });
+
       setJustAdded(true);
       setTimeout(() => setJustAdded(false), 500);
     },
@@ -164,31 +222,60 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const removeItem = useCallback((itemId: string, size: string) => {
     setItems((prev) =>
-      prev.filter((ci) => !(ci.item.id === itemId && ci.size === size))
+      prev.filter((ci) => !(ci.itemId === itemId && ci.size === size))
     );
   }, []);
 
   const updateQuantity = useCallback(
     (itemId: string, size: string, qty: number) => {
-      if (qty <= 0) {
-        removeItem(itemId, size);
-        return;
-      }
+      setItems((prev) => {
+        const target = prev.find((ci) => ci.itemId === itemId && ci.size === size);
 
-      if (qty > maxQuantityPerItem) {
-        toast.error(`Maximum ${maxQuantityPerItem} of this item allowed per order`);
-        return;
-      }
+        if (!target) {
+          return prev;
+        }
 
-      setItems((prev) =>
-        prev.map((ci) =>
-          ci.item.id === itemId && ci.size === size
-            ? { ...ci, quantity: qty }
+        if (target.offerType === "bogo") {
+          if (qty <= 1) {
+            return prev.filter((ci) => !(ci.itemId === itemId && ci.size === size));
+          }
+
+          const changingUp = qty > target.quantity;
+          let nextQty = changingUp ? target.quantity + 2 : target.quantity - 2;
+
+          if (nextQty < 2) {
+            return prev.filter((ci) => !(ci.itemId === itemId && ci.size === size));
+          }
+
+          if (nextQty > maxQuantityPerItem) {
+            toast.error(`Maximum ${maxQuantityPerItem} of this item allowed per order`);
+            nextQty = target.quantity;
+          }
+
+          return prev.map((ci) =>
+            ci.itemId === itemId && ci.size === size
+              ? toCartItem(ci.item, ci.size, nextQty)
+              : ci
+          );
+        }
+
+        if (qty <= 0) {
+          return prev.filter((ci) => !(ci.itemId === itemId && ci.size === size));
+        }
+
+        if (qty > maxQuantityPerItem) {
+          toast.error(`Maximum ${maxQuantityPerItem} of this item allowed per order`);
+          return prev;
+        }
+
+        return prev.map((ci) =>
+          ci.itemId === itemId && ci.size === size
+            ? toCartItem(ci.item, ci.size, qty)
             : ci
-        )
-      );
+        );
+      });
     },
-    [maxQuantityPerItem, removeItem]
+    [maxQuantityPerItem]
   );
 
   const clearCart = useCallback(() => {
@@ -197,10 +284,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const totalItems = items.reduce((sum, ci) => sum + ci.quantity, 0);
-  const totalPrice = items.reduce(
-    (sum, ci) => sum + getItemPrice(ci.item, ci.size) * ci.quantity,
-    0
+  const subtotal = Math.round(
+    items.reduce((sum, ci) => sum + ci.originalPrice * ci.quantity, 0)
   );
+  const totalSavings = Math.round(items.reduce((sum, ci) => sum + ci.savings, 0));
+  const grandTotal = Math.round(items.reduce((sum, ci) => sum + ci.itemTotal, 0));
+  const totalPrice = grandTotal;
 
   const remainingForMinimum = 0;
   const meetsMinimumOrder = true;
@@ -215,6 +304,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
         clearCart,
         totalItems,
         totalPrice,
+        subtotal,
+        totalSavings,
+        grandTotal,
         isCartOpen,
         setIsCartOpen,
         justAdded,

@@ -1,98 +1,122 @@
-import type { ItemOffer, OfferType } from "@/data/menuData";
+import type { MenuItem, OfferType } from "@/data/menuData";
 
-/**
- * Returns true when an offer is enabled and not expired.
- */
-export function isOfferActive(offer?: ItemOffer): boolean {
-  if (!offer || !offer.active) {
-    return false;
-  }
-
-  if (!offer.expiresAt) {
-    return true;
-  }
-
-  const expiresAt = new Date(offer.expiresAt);
-  if (Number.isNaN(expiresAt.getTime())) {
-    return false;
-  }
-
-  return expiresAt.getTime() > Date.now();
+export interface OfferPricing {
+  originalPrice: number;
+  finalPrice: number;
+  quantity: number;
+  billedQuantity: number;
+  itemTotal: number;
+  savings: number;
+  offerType: OfferType;
+  offerPercentage?: number;
+  offerLabel: string;
 }
 
-/**
- * Returns a human-readable badge label for an offer.
- */
-export function getOfferLabel(offer?: ItemOffer): string {
-  if (!offer) {
-    return "";
+export function normalizeOfferType(offerType?: OfferType): OfferType {
+  return offerType ?? "none";
+}
+
+export function isOfferActive(offerType?: OfferType): boolean {
+  return normalizeOfferType(offerType) !== "none";
+}
+
+export function getOfferLabel(item: Pick<MenuItem, "offerType" | "offerPercentage">): string {
+  const offerType = normalizeOfferType(item.offerType);
+
+  if (offerType === "bogo") {
+    return "BOGO Free";
   }
 
-  switch (offer.type) {
-    case "percentage_off":
-      return `${Math.max(0, offer.value ?? 0)}% OFF`;
-    case "buy_one_get_one":
-      return "BOGO FREE";
-    case "new":
-      return "NEW";
+  if (offerType === "percentage") {
+    const percentage = Math.max(0, Math.round(item.offerPercentage ?? 0));
+    return `${percentage}% Off`;
+  }
+
+  if (offerType === "new_tag") {
+    return "New";
+  }
+
+  return "";
+}
+
+export function getOfferBadgeColor(offerType?: OfferType): string {
+  switch (normalizeOfferType(offerType)) {
+    case "bogo":
+      return "bg-[#FFC200] text-black";
+    case "percentage":
+      return "bg-emerald-500 text-white";
+    case "new_tag":
+      return "bg-blue-500 text-white";
     default:
-      return "";
+      return "bg-transparent text-transparent";
   }
 }
 
-/**
- * Returns Tailwind class names for each offer badge color state.
- */
-export function getOfferBadgeColor(offer?: ItemOffer): string {
-  if (!offer) {
-    return "bg-primary text-black shadow-[0_6px_20px_rgba(245,166,35,0.35)]";
+export function calculateDiscountedPrice(originalPrice: number, offerPercentage?: number): number {
+  const percentage = Math.max(0, Math.min(99, Math.round(offerPercentage ?? 0)));
+  const discounted = originalPrice - (originalPrice * percentage) / 100;
+  return Math.round(discounted);
+}
+
+export function getPricingForItem(
+  item: Pick<MenuItem, "offerType" | "offerPercentage">,
+  basePrice: number,
+  quantity: number
+): OfferPricing {
+  const normalizedQuantity = Math.max(0, Math.round(quantity));
+  const offerType = normalizeOfferType(item.offerType);
+  const offerLabel = getOfferLabel(item);
+
+  if (offerType === "bogo") {
+    const safeQuantity = normalizedQuantity === 0 ? 0 : Math.max(2, normalizedQuantity + (normalizedQuantity % 2));
+    const billedQuantity = safeQuantity === 0 ? 0 : safeQuantity / 2;
+    const itemTotal = Math.round(basePrice * billedQuantity);
+    const savings = Math.round(basePrice * billedQuantity);
+
+    return {
+      originalPrice: Math.round(basePrice),
+      finalPrice: Math.round(basePrice),
+      quantity: safeQuantity,
+      billedQuantity,
+      itemTotal,
+      savings,
+      offerType,
+      offerPercentage: undefined,
+      offerLabel,
+    };
   }
 
-  const colorMap: Record<OfferType, string> = {
-    percentage_off: "bg-red-500 text-white shadow-[0_6px_20px_rgba(239,68,68,0.35)]",
-    buy_one_get_one: "bg-primary text-black shadow-[0_6px_20px_rgba(245,166,35,0.35)]",
-    new: "bg-emerald-500 text-white shadow-[0_6px_20px_rgba(16,185,129,0.35)]",
+  if (offerType === "percentage") {
+    const finalPrice = calculateDiscountedPrice(basePrice, item.offerPercentage);
+    const billedQuantity = normalizedQuantity;
+    const itemTotal = Math.round(finalPrice * billedQuantity);
+    const savings = Math.round((Math.round(basePrice) - finalPrice) * billedQuantity);
+
+    return {
+      originalPrice: Math.round(basePrice),
+      finalPrice,
+      quantity: normalizedQuantity,
+      billedQuantity,
+      itemTotal,
+      savings,
+      offerType,
+      offerPercentage: Math.round(item.offerPercentage ?? 0),
+      offerLabel,
+    };
+  }
+
+  const billedQuantity = normalizedQuantity;
+  const finalPrice = Math.round(basePrice);
+
+  return {
+    originalPrice: Math.round(basePrice),
+    finalPrice,
+    quantity: normalizedQuantity,
+    billedQuantity,
+    itemTotal: Math.round(finalPrice * billedQuantity),
+    savings: 0,
+    offerType,
+    offerPercentage: undefined,
+    offerLabel,
   };
-
-  return colorMap[offer.type];
-}
-
-/**
- * Returns a discounted price when the offer is percentage or flat discount.
- */
-export function calculateDiscountedPrice(originalPrice: number, offer?: ItemOffer): number {
-  if (!offer || !isOfferActive(offer)) {
-    return originalPrice;
-  }
-
-  if (offer.type === "percentage_off") {
-    const percentage = Math.min(99, Math.max(1, offer.value ?? 0));
-    const discounted = originalPrice - (originalPrice * percentage) / 100;
-    return Math.max(0, Math.round(discounted));
-  }
-
-  return originalPrice;
-}
-
-/**
- * Builds one WhatsApp line item with offer annotation when applicable.
- */
-export function formatOfferForWhatsApp(
-  itemName: string,
-  qty: number,
-  originalPrice: number,
-  offer?: ItemOffer
-): string {
-  if (!offer || !isOfferActive(offer)) {
-    return `• ${itemName} x${qty} — ₹${originalPrice}`;
-  }
-
-  const label = getOfferLabel(offer);
-  const discounted = calculateDiscountedPrice(originalPrice, offer);
-
-  if (offer.type === "percentage_off") {
-    return `• ${itemName} x${qty} — ₹${discounted} (${label}, was ₹${originalPrice})`;
-  }
-
-  return `• ${itemName} x${qty} — ₹${originalPrice} (${label})`;
 }

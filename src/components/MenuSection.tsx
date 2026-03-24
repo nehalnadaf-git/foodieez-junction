@@ -8,7 +8,7 @@ import { type MenuItem } from "@/data/menuData";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import { UtensilsCrossed } from "lucide-react";
 import { OfferBadge } from "@/components/menu/OfferBadge";
-import { calculateDiscountedPrice, isOfferActive } from "@/utils/offer";
+import { calculateDiscountedPrice } from "@/utils/offer";
 import { useMenuFilter } from "@/hooks/useMenuFilter";
 import { MenuFilterToggle } from "@/components/menu/MenuFilterToggle";
 import { OutOfStockBadge } from "@/components/menu/OutOfStockBadge";
@@ -27,12 +27,10 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
       ? item.priceSmall ?? 0
       : item.priceLarge ?? 0
     : item.price ?? 0;
-  const hasDiscountOffer =
-    Boolean(item.offer) &&
-    isOfferActive(item.offer) &&
-    item.offer?.type === "percentage_off";
-  const hasActiveOffer = Boolean(item.offer) && isOfferActive(item.offer);
-  const discountedPrice = hasDiscountOffer ? calculateDiscountedPrice(basePrice, item.offer) : basePrice;
+  const hasDiscountOffer = item.offerType === "percentage";
+  const isBogo = item.offerType === "bogo";
+  const discountedPrice = hasDiscountOffer ? calculateDiscountedPrice(basePrice, item.offerPercentage) : basePrice;
+  const perItemSavings = hasDiscountOffer ? Math.max(0, Math.round(basePrice - discountedPrice)) : 0;
   const hasImage = Boolean(item.image && item.image.trim().length > 0 && !imageError);
   const isOutOfStock = item.available === false;
   const cardOpacity = isOutOfStock && filterMode === "all" ? 0.6 : 1;
@@ -90,7 +88,7 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
           overflow: "visible",
         }}
       >
-        {/* OfferBadge is rendered inline next to price instead */}
+
         <div className="flex flex-col flex-1 p-[14px] pt-[70px] lg:pt-[88px] lg:pb-[18px]">
 
           {/* Item name + veg/nonveg dot */}
@@ -160,6 +158,10 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
                     </span>
                     <span style={{ color: "hsl(var(--primary))" }}>₹{discountedPrice}</span>
                   </p>
+                ) : isBogo ? (
+                  <p style={{ color: "#FFFFFF", fontSize: 15, fontWeight: 700, margin: 0 }}>
+                    ₹{basePrice}
+                  </p>
                 ) : (
                   <p style={{ color: "#FFFFFF", fontSize: 15, fontWeight: 700, margin: 0 }}>
                     ₹{basePrice}
@@ -168,27 +170,29 @@ const MenuItemCard = ({ item, index, filterMode }: { item: MenuItem; index: numb
               </div>
             )}
             {hasSize && (
-              <p style={{ color: "#FFFFFF", fontSize: 15, fontWeight: 700, marginTop: 8, marginBottom: 0 }}>
-                {hasDiscountOffer ? (
-                  <>
-                    <span style={{ color: "rgba(255,255,255,0.55)", textDecoration: "line-through", marginRight: 6 }}>
-                      ₹{basePrice}
-                    </span>
-                    <span style={{ color: "hsl(var(--primary))" }}>₹{discountedPrice}</span>
-                  </>
-                ) : (
-                  `₹${basePrice}`
-                )}
-              </p>
-            )}
-          </div>
+              <div style={{ marginTop: 8 }}>
+                <p style={{ color: "#FFFFFF", fontSize: 15, fontWeight: 700, marginBottom: 0 }}>
+                  {hasDiscountOffer ? (
+                    <>
+                      <span style={{ color: "rgba(255,255,255,0.55)", textDecoration: "line-through", marginRight: 6 }}>
+                        ₹{basePrice}
+                      </span>
+                      <span style={{ color: "hsl(var(--primary))" }}>₹{discountedPrice}</span>
+                    </>
+                  ) : (
+                    `₹${basePrice}`
+                  )}
+                </p>
 
-          {/* Offer badge — below the price, above Add To Cart */}
-          {hasActiveOffer && (
-            <div className="mb-2">
-              <OfferBadge offer={item.offer} inline />
+              </div>
+            )}
+            {/* ── Offer badge — inline, below price ── */}
+            <div style={{ marginTop: 6 }}>
+              <OfferBadge item={item} variant="inline" />
             </div>
-          )}
+
+
+          </div>
 
           {/* Add To Cart — always pinned to bottom */}
           <div style={{ marginTop: "auto" }}>

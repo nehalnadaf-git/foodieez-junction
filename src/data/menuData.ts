@@ -1,16 +1,9 @@
 
 export type OfferType =
-  | "percentage_off"
-  | "buy_one_get_one"
-  | "new";
-
-export interface ItemOffer {
-  type: OfferType;
-  value?: number;
-  customText?: string;
-  active: boolean;
-  expiresAt?: string;
-}
+  | "bogo"
+  | "percentage"
+  | "new_tag"
+  | "none";
 
 export interface MenuItemSize {
   label: string;
@@ -29,7 +22,8 @@ export interface MenuItem {
   sizes?: MenuItemSize[];
   available?: boolean;
   isSpecial?: boolean;
-  offer?: ItemOffer;
+  offerType?: OfferType;
+  offerPercentage?: number;
   /** Path to individual product image inside /public (e.g. "/Products/Chicken/Chicken 65.png") */
   image?: string;
   imageSource?: "upload" | "url";
