@@ -53,8 +53,7 @@ export function ProductRow({ item, stagedItem, onToggle }: ProductRowProps) {
       </div>
 
       {/* RIGHT SIDE: Action Toggle */}
-      <Tooltip.Provider delayDuration={200}>
-        <Tooltip.Root>
+      <Tooltip.Root>
           <Tooltip.Trigger asChild>
             <button
               onClick={() => onToggle(item.id)}
@@ -107,7 +106,6 @@ export function ProductRow({ item, stagedItem, onToggle }: ProductRowProps) {
             </Tooltip.Content>
           </Tooltip.Portal>
         </Tooltip.Root>
-      </Tooltip.Provider>
     </motion.div>
   );
 }

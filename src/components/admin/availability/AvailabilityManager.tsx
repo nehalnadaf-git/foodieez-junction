@@ -9,6 +9,7 @@ import { UnsavedChangesBar } from "./UnsavedChangesBar";
 import { SaveButton } from "./SaveButton";
 import { motion, AnimatePresence } from "framer-motion";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useRouter } from "next/navigation";
 
 export function AvailabilityManager() {
@@ -69,6 +70,7 @@ export function AvailabilityManager() {
   }, [hasUnsavedChanges]);
 
   return (
+    <Tooltip.Provider delayDuration={200}>
     <div className="relative max-w-[1200px] mx-auto min-h-screen">
       <UnsavedChangesBar hasUnsavedChanges={hasUnsavedChanges} />
 
@@ -163,5 +165,6 @@ export function AvailabilityManager() {
         </AlertDialog.Portal>
       </AlertDialog.Root>
     </div>
+    </Tooltip.Provider>
   );
 }
