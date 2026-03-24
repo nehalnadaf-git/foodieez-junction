@@ -17,21 +17,21 @@ function getInlineStyle(offerType?: string): React.CSSProperties {
   switch (offerType) {
     case "bogo":
       return {
-        background: "rgba(245, 158, 11, 0.18)",
-        border: "1px solid rgba(245, 158, 11, 0.45)",
-        color: "#FCD34D",
+        background: "#FFB800",
+        border: "1px solid #FFD366",
+        color: "#000000",
       };
     case "percentage":
       return {
-        background: "rgba(16, 185, 129, 0.15)",
-        border: "1px solid rgba(16, 185, 129, 0.40)",
-        color: "#6EE7B7",
+        background: "#10B981",
+        border: "1px solid #34D399",
+        color: "#FFFFFF",
       };
     case "new_tag":
       return {
-        background: "rgba(255, 255, 255, 0.07)",
-        border: "1px solid rgba(255, 255, 255, 0.22)",
-        color: "rgba(255, 255, 255, 0.80)",
+        background: "#006EFF",
+        border: "1px solid rgba(0, 110, 255, 1)",
+        color: "#FFFFFF",
       };
     default:
       return {};
