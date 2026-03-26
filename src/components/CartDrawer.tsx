@@ -137,10 +137,13 @@ const CartDrawer = () => {
       restaurantName: settings.restaurant.restaurantName,
     });
 
-    // 5. Open WhatsApp synchronously
+    // 6. Open WhatsApp synchronously
     window.open(buildWhatsAppUrl(getTargetPhone(), msg), "_blank");
 
-    // 6. Toast + reset local state (cart items REMAIN)
+    // 7. Clear the cart so the next round starts fresh
+    clearCart();
+
+    // 8. Toast + reset local state
     toast.success("Order sent to kitchen");
     setSpecialInstructions("");
     setPayAtLastChecked(true);
@@ -149,7 +152,7 @@ const CartDrawer = () => {
   }, [
     restaurantOpen, totalItems, isSending, session, nameInput, scannedTableNumber,
     settings, items, specialInstructions, subtotal, totalSavings, grandTotal,
-    initSession, addOrderToSession, getTargetPhone, setIsCartOpen,
+    initSession, addOrderToSession, clearCart, getTargetPhone, setIsCartOpen,
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -728,32 +731,65 @@ const CartDrawer = () => {
 
                   {/* ── PAY NOW / Place Order CTA ── */}
                   {finalPayStep !== "select_payment" && (
-                    <button
-                      id="pay-now-btn"
-                      onClick={handlePayNow}
-                      disabled={!canPlaceOrder || isSending}
-                      className="w-full font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                      style={{
-                        minHeight: 56,
-                        borderRadius: 9999,
-                        background:
-                          canPlaceOrder
-                            ? "#FFC200"
-                            : "hsl(var(--muted))",
-                        color: canPlaceOrder ? "#0a0a0a" : "hsl(var(--muted-foreground))",
-                        boxShadow: canPlaceOrder
-                          ? "0 10px 30px rgba(255,194,0,0.35)"
-                          : "none",
-                      }}
-                    >
-                      {isSending
-                        ? "Sending…"
-                        : isQrCustomer && payAtLastChecked
-                        ? "Pay Now  →  Kitchen"
-                        : isQrCustomer && hasActiveOrders
-                        ? "Pay Now  →  Final Bill"
-                        : "Place Order via WhatsApp"}
-                    </button>
+                    isQrCustomer && payAtLastChecked ? (
+                      /* Two buttons: Pay At Last + Final Bill */
+                      <div className="space-y-2">
+                        {/* Primary: send to kitchen, clear cart */}
+                        <button
+                          id="pay-at-last-btn"
+                          onClick={handlePayAtLastOrder}
+                          disabled={!canPlaceOrder || isSending}
+                          className="w-full font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                          style={{
+                            minHeight: 56,
+                            borderRadius: 9999,
+                            background: canPlaceOrder ? "#FFC200" : "hsl(var(--muted))",
+                            color: canPlaceOrder ? "#0a0a0a" : "hsl(var(--muted-foreground))",
+                            boxShadow: canPlaceOrder ? "0 10px 30px rgba(255,194,0,0.35)" : "none",
+                          }}
+                        >
+                          {isSending ? "Sending…" : "Pay At Last"}
+                        </button>
+
+                        {/* Secondary: trigger final bill payment selection */}
+                        <button
+                          id="final-bill-btn"
+                          onClick={() => setFinalPayStep("select_payment")}
+                          disabled={isSending || !hasActiveOrders}
+                          className="w-full font-bold text-base border-2 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                          style={{
+                            minHeight: 48,
+                            borderRadius: 9999,
+                            borderColor: hasActiveOrders ? "#FFC200" : "hsl(var(--foreground) / 0.2)",
+                            color: hasActiveOrders ? "#FFC200" : "hsl(var(--muted-foreground))",
+                            background: "transparent",
+                          }}
+                        >
+                          Final Bill
+                        </button>
+                      </div>
+                    ) : (
+                      /* Single button: Place Order or Final Bill */
+                      <button
+                        id="pay-now-btn"
+                        onClick={handlePayNow}
+                        disabled={!canPlaceOrder || isSending}
+                        className="w-full font-bold text-base transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{
+                          minHeight: 56,
+                          borderRadius: 9999,
+                          background: canPlaceOrder ? "#FFC200" : "hsl(var(--muted))",
+                          color: canPlaceOrder ? "#0a0a0a" : "hsl(var(--muted-foreground))",
+                          boxShadow: canPlaceOrder ? "0 10px 30px rgba(255,194,0,0.35)" : "none",
+                        }}
+                      >
+                        {isSending
+                          ? "Sending…"
+                          : isQrCustomer && hasActiveOrders
+                          ? "Final Bill"
+                          : "Place Order via WhatsApp"}
+                      </button>
+                    )
                   )}
                 </div>
               )}
