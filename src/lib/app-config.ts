@@ -60,6 +60,7 @@ export interface AppSettings {
 export const STORAGE_KEYS = {
   cart: "fj-cart-v1",
   tableBannerDismissed: "fj-table-banner-dismissed-v1",
+  djSession: "fj_dine_session",
 } as const;
 
 export const DEFAULT_ORDER_SETTINGS: OrderSettings = {

@@ -10,6 +10,21 @@ import { CartProvider } from "./CartProvider";
 import { ThemeProvider } from "./ThemeProvider";
 import { QueryProvider } from "./QueryProvider";
 import { ConvexClientProvider } from "./ConvexClientProvider";
+import { SessionExpiryBanner } from "@/components/cart/SessionExpiryBanner";
+import { usePayAtLast } from "@/hooks/usePayAtLast";
+import { useCart } from "@/context/CartContext";
+
+/** Inner wrapper that has access to both CartContext and PayAtLast state */
+function SessionExpiryBannerWrapper() {
+  const { session } = usePayAtLast();
+  const { setIsCartOpen } = useCart();
+
+  const handlePayNow = () => {
+    setIsCartOpen(true);
+  };
+
+  return <SessionExpiryBanner session={session} onPayNow={handlePayNow} />;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -23,6 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                   <CartProvider>
                     <Toaster />
                     <Sonner />
+                    <SessionExpiryBannerWrapper />
                     {children}
                   </CartProvider>
                 </TableProvider>
@@ -34,3 +50,4 @@ export function Providers({ children }: { children: React.ReactNode }) {
     </ConvexClientProvider>
   );
 }
+
