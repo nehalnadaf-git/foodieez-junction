@@ -98,7 +98,22 @@ export function generateKitchenMessage(params: {
 }
 
 // ─── Format 2 & 3: Final consolidated bill (Cash or UPI) ────────────────────
-// Sent when Pay at Last is unticked and customer selects payment method.
+// Sent when Final Bill is clicked. ALL items from every order round are
+// merged into one single list — same dish ordered multiple times is summed.
+
+/** Merge key: name + size */
+function mergeKey(name: string, size: string): string {
+  return `${name}||${size}`;
+}
+
+interface MergedItem {
+  name: string;
+  size: "small" | "large" | "single";
+  quantity: number;
+  offerType: string;
+  offerPercentage?: number;
+  itemTotal: number;
+}
 
 export function generateFinalBill(params: {
   session: DineSession;
@@ -125,23 +140,54 @@ export function generateFinalBill(params: {
 
   const lines: string[] = [];
 
-  // Build the current order record to merge with past orders
-  const currentOrderNumber = session.totalOrdersCount + 1;
-  const currentItems: PayAtLastItemRecord[] = cartItemsToRecords(currentCartItems);
+  // ── Step 1: Build merged item map ──────────────────────────────────────────
+  // Walk every past order record + current cart → merge by name+size.
+  const mergedMap = new Map<string, MergedItem>();
 
-  // All orders: previous (already in session) + current
-  const allOrders = [
-    ...session.orders,
-    {
-      orderNumber: currentOrderNumber,
-      timestamp: Date.now(),
-      items: currentItems,
-      orderTotal: currentOrderTotal,
-      orderSubtotal: currentOrderSubtotal,
-      orderSavings: currentOrderSavings,
-      specialInstructions: currentSpecialInstructions,
-    },
-  ];
+  const addRecord = (item: PayAtLastItemRecord) => {
+    const key = mergeKey(item.name, item.size);
+    const existing = mergedMap.get(key);
+    if (existing) {
+      existing.quantity += item.quantity;
+      existing.itemTotal += item.itemTotal;
+    } else {
+      mergedMap.set(key, {
+        name: item.name,
+        size: item.size,
+        quantity: item.quantity,
+        offerType: item.offerType,
+        offerPercentage: item.offerPercentage,
+        itemTotal: item.itemTotal,
+      });
+    }
+  };
+
+  // Past orders saved in session
+  for (const order of session.orders) {
+    for (const item of order.items) {
+      addRecord(item);
+    }
+  }
+
+  // Current cart (not yet saved to session when Final Bill is clicked
+  // for the case where the cart still has items)
+  const currentRecords = cartItemsToRecords(currentCartItems);
+  for (const item of currentRecords) {
+    addRecord(item);
+  }
+
+  // ── Step 2: Collect all special notes ─────────────────────────────────────
+  const allNotes = [
+    ...session.orders.map((o) => o.specialInstructions?.trim() ?? ""),
+    currentSpecialInstructions.trim(),
+  ].filter(Boolean);
+
+  // ── Step 3: Grand totals ───────────────────────────────────────────────────
+  const totalSubtotal = session.runningSubtotal + currentOrderSubtotal;
+  const totalSavings = session.runningSavings + currentOrderSavings;
+  const totalDue = session.runningTotal + currentOrderTotal;
+
+  // ── Step 4: Build message ─────────────────────────────────────────────────
 
   // Header
   lines.push(SEP);
@@ -152,30 +198,33 @@ export function generateFinalBill(params: {
   lines.push(`Customer : ${session.customerName}`);
   lines.push(`Payment  : ${paymentMethod === "cash" ? "Cash" : "UPI"}`);
 
-  // Per-order sections
-  for (const order of allOrders) {
-    lines.push(SEP);
-    lines.push(`ORDER ${order.orderNumber}`);
-    lines.push(SEP);
+  // Single merged item list
+  lines.push(SEP);
+  lines.push(`ALL ORDERS`);
+  lines.push(SEP);
 
-    order.items.forEach((item, idx) => {
-      const [nameLine, priceLine] = formatRecordLines(item, idx);
-      lines.push(nameLine);
-      lines.push(priceLine);
-      if (idx < order.items.length - 1) lines.push("");
-    });
-
-    if (order.specialInstructions?.trim()) {
-      lines.push(SEP);
-      lines.push(`NOTE : ${order.specialInstructions.trim()}`);
+  const mergedItems = Array.from(mergedMap.values());
+  mergedItems.forEach((item, idx) => {
+    const nameLine = `${idx + 1}. ${item.name}${sizeTag(item.size)}`;
+    const parts: string[] = [`x${item.quantity}`];
+    if (item.offerType === "bogo") {
+      parts.push("BOGO Free");
+    } else if (item.offerType === "percentage") {
+      parts.push(`${Math.round(item.offerPercentage ?? 0)}% Off`);
     }
+    parts.push(rs(item.itemTotal));
+    lines.push(nameLine);
+    lines.push(`   ${parts.join("  |  ")}`);
+    if (idx < mergedItems.length - 1) lines.push("");
+  });
+
+  // Combined notes (if any)
+  if (allNotes.length > 0) {
+    lines.push(SEP);
+    lines.push(`NOTES : ${allNotes.join(" | ")}`);
   }
 
   // Grand totals
-  const totalSubtotal = session.runningSubtotal + currentOrderSubtotal;
-  const totalSavings = session.runningSavings + currentOrderSavings;
-  const totalDue = session.runningTotal + currentOrderTotal;
-
   lines.push(SEP);
   lines.push(`Subtotal  : ${rs(totalSubtotal)}`);
   if (totalSavings > 0) {
