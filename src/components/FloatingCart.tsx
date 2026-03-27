@@ -3,11 +3,13 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, ChevronRight } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { usePayAtLast } from "@/hooks/usePayAtLast";
 
 const FloatingCart = () => {
   const { totalItems, totalPrice, setIsCartOpen, isCartOpen } = useCart();
+  const { hasActiveOrders, isHydrated } = usePayAtLast();
 
-  const shouldShow = totalItems > 0 && !isCartOpen;
+  const shouldShow = (totalItems > 0 || (isHydrated && hasActiveOrders)) && !isCartOpen;
 
   return (
     <AnimatePresence>

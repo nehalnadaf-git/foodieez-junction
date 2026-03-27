@@ -180,24 +180,51 @@ export function generateFinalBill(params: {
   lines.push(`Customer : ${session.customerName}`);
   lines.push(`Payment  : ${paymentMethod === "cash" ? "Cash" : "UPI"}`);
 
-  // ── Per-order sections with time labels ───────────────────────────────────
+  // ── Merge all items ───────────────────────────────────────────────────────
+  const mergedItemsMap = new Map<string, PayAtLastItemRecord>();
+  const allNotes: string[] = [];
+
   for (const order of allOrders) {
-    const orderTimeLabel = formatOrderTime(order.timestamp);
-    lines.push(SEP);
-    lines.push(`ORDER ${order.orderNumber}  |  ${orderTimeLabel}`);
-    lines.push(SEP);
-
-    order.items.forEach((item, idx) => {
-      const [nameLine, priceLine] = formatRecordLines(item, idx);
-      lines.push(nameLine);
-      lines.push(priceLine);
-      if (idx < order.items.length - 1) lines.push("");
-    });
-
     if (order.specialInstructions?.trim()) {
-      lines.push(SEP);
-      lines.push(`NOTE : ${order.specialInstructions.trim()}`);
+      allNotes.push(`Order ${order.orderNumber}: ${order.specialInstructions.trim()}`);
     }
+
+    for (const item of order.items) {
+      // Group by Name, size, and offer type
+      const key = `${item.name}-${item.size}-${item.offerType}`;
+      const existing = mergedItemsMap.get(key);
+
+      if (existing) {
+        mergedItemsMap.set(key, {
+          ...existing,
+          quantity: existing.quantity + item.quantity,
+          billedQuantity: existing.billedQuantity + item.billedQuantity,
+          itemTotal: existing.itemTotal + item.itemTotal,
+          savings: existing.savings + item.savings,
+        });
+      } else {
+        mergedItemsMap.set(key, { ...item });
+      }
+    }
+  }
+
+  const mergedItems = Array.from(mergedItemsMap.values());
+
+  lines.push(SEP);
+  lines.push("CONSOLIDATED BILL");
+  lines.push(SEP);
+
+  mergedItems.forEach((item, idx) => {
+    const [nameLine, priceLine] = formatRecordLines(item, idx);
+    lines.push(nameLine);
+    lines.push(priceLine);
+    if (idx < mergedItems.length - 1) lines.push("");
+  });
+
+  if (allNotes.length > 0) {
+    lines.push(SEP);
+    lines.push("NOTES:");
+    allNotes.forEach((note) => lines.push(`- ${note}`));
   }
 
   // ── Grand totals ──────────────────────────────────────────────────────────
@@ -205,6 +232,7 @@ export function generateFinalBill(params: {
   lines.push(`Subtotal  : ${rs(totalSubtotal)}`);
   if (totalSavings > 0) {
     lines.push(`Savings   : ${rs(totalSavings)}`);
+    lines.push("");
   }
   lines.push(`TOTAL DUE : ${rs(totalDue)}`);
   lines.push(SEP);
