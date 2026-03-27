@@ -11,6 +11,18 @@ export function PWAInstallPrompt() {
         .then((reg) => console.log("SW registered: ", reg.scope))
         .catch((err) => console.log("SW registration failed: ", err));
     }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      // @ts-ignore
+      window.deferredPwaPrompt = e;
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
 
   return null;
