@@ -341,7 +341,7 @@ const OrderModal = () => {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: 0, duration: 0.22 }}
                           onClick={() => setOrderType(orderType === "takeaway" ? null : "takeaway")}
-                          className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${orderType === "takeaway" ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_24px_rgba(16,185,129,0.15)]" : "border-white/10 bg-white/[0.04] hover:border-emerald-500/40 hover:bg-white/[0.06]"}`}
+                          className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${orderType === "takeaway" ? "border-emerald-500 bg-emerald-500/10 shadow-[0_0_24px_rgba(16,185,129,0.15)]" : "border-border bg-card/50 hover:border-emerald-500/40 hover:bg-muted/50"}`}
                         >
                           {orderType === "takeaway" && (
                             <div className="absolute top-3.5 right-3.5 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center animate-scale-in">
@@ -374,7 +374,7 @@ const OrderModal = () => {
                                 if (hasQrTable) setTableNo(scannedTableNumber ?? "");
                               }
                             }}
-                            className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${orderType === "dine-in" ? "border-primary bg-primary/10 shadow-[0_0_24px_rgba(245,166,35,0.15)]" : "border-white/10 bg-white/[0.04] hover:border-primary/40 hover:bg-white/[0.06]"}`}
+                            className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${orderType === "dine-in" ? "border-primary bg-primary/10 shadow-[0_0_24px_rgba(245,166,35,0.15)]" : "border-border bg-card/50 hover:border-primary/40 hover:bg-muted/50"}`}
                           >
                             {orderType === "dine-in" && (
                               <div className="absolute top-3.5 right-3.5 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
@@ -382,8 +382,8 @@ const OrderModal = () => {
                               </div>
                             )}
                             <div className="flex items-start gap-3.5">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "dine-in" ? "bg-primary/20" : "bg-white/[0.08]"}`}>
-                                <UtensilsCrossed className={`w-[18px] h-[18px] transition-colors ${orderType === "dine-in" ? "text-primary" : "text-white/50"}`} />
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "dine-in" ? "bg-primary/20" : "bg-muted"}`}>
+                                <UtensilsCrossed className={`w-[18px] h-[18px] transition-colors ${orderType === "dine-in" ? "text-primary" : "text-muted-foreground"}`} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -403,19 +403,19 @@ const OrderModal = () => {
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.08, duration: 0.22 }}
-                            className="relative p-4 rounded-2xl border-2 border-dashed border-white/10 bg-white/[0.02] cursor-not-allowed select-none"
+                            className="relative p-4 rounded-2xl border-2 border-dashed border-border bg-card/30 cursor-not-allowed select-none"
                             style={{ opacity: 0.62 }}
                           >
                             <div className="flex items-start gap-3.5">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-white/5">
-                                <UtensilsCrossed className="w-[18px] h-[18px] text-white/20" />
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-muted">
+                                <UtensilsCrossed className="w-[18px] h-[18px] text-muted-foreground/60" />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                                  <span className="font-display font-bold text-sm text-white/35">Dine-In</span>
-                                  <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }} className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border border-amber-500/35 text-amber-400/80 leading-none">📍 Location Only</motion.span>
+                                  <span className="font-display font-bold text-sm text-muted-foreground/70">Dine-In</span>
+                                  <motion.span animate={{ opacity: [1, 0.5, 1] }} transition={{ duration: 2, repeat: Infinity }} className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold border border-amber-500/35 text-amber-500 leading-none">📍 Location Only</motion.span>
                                 </div>
-                                <p className="text-[11px] text-white/30 font-body">Scan the QR at your table to unlock</p>
+                                <p className="text-[11px] text-muted-foreground/60 font-body">Scan the QR at your table to unlock</p>
                               </div>
                             </div>
                           </motion.div>
@@ -431,10 +431,10 @@ const OrderModal = () => {
                             disabled={deliveryBelowMinimum}
                             className={`relative p-4 text-left rounded-2xl border-2 w-full transition-all duration-200 ${
                               deliveryBelowMinimum
-                                ? "border-white/10 bg-white/[0.02] opacity-50 cursor-not-allowed"
+                                ? "border-border bg-card/30 opacity-50 cursor-not-allowed"
                                 : orderType === "delivery"
                                 ? "border-primary bg-primary/10 shadow-[0_0_24px_rgba(245,166,35,0.15)]"
-                                : "border-white/10 bg-white/[0.04] hover:border-primary/40 hover:bg-white/[0.06]"
+                                : "border-border bg-card/50 hover:border-primary/40 hover:bg-muted/50"
                             }`}
                           >
                             {orderType === "delivery" && (
@@ -443,8 +443,8 @@ const OrderModal = () => {
                               </div>
                             )}
                             <div className="flex items-start gap-3.5">
-                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "delivery" ? "bg-primary/20" : "bg-white/[0.08]"}`}>
-                                <Truck className={`w-[18px] h-[18px] transition-colors ${orderType === "delivery" ? "text-primary" : "text-white/50"}`} />
+                              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors ${orderType === "delivery" ? "bg-primary/20" : "bg-muted"}`}>
+                                <Truck className={`w-[18px] h-[18px] transition-colors ${orderType === "delivery" ? "text-primary" : "text-muted-foreground"}`} />
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-0.5 flex-wrap">
@@ -551,9 +551,9 @@ const OrderModal = () => {
                           />
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className="flex-1 h-px bg-white/10" />
+                          <div className="flex-1 h-px bg-border" />
                           <span className="text-xs text-muted-foreground">or</span>
-                          <div className="flex-1 h-px bg-white/10" />
+                          <div className="flex-1 h-px bg-border" />
                         </div>
                         <div>
                           <label className="text-xs font-heading font-bold text-muted-foreground uppercase tracking-wider mb-1 block">Google Maps Link</label>
