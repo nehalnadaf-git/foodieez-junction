@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { SocialMediaLinks } from "@/components/admin/settings/SocialMediaLinks";
 import { DineInToggleCard } from "@/components/admin/settings/DineInToggleCard";
+import { DeliverySettingsCard } from "@/components/admin/settings/DeliverySettingsCard";
 
 type SettingsFormValues = {
   restaurantAddress: string;
@@ -107,6 +108,8 @@ export default function AdminSettingsPage() {
       <SocialMediaLinks />
 
       <DineInToggleCard />
+
+      <DeliverySettingsCard />
     </motion.section>
   );
 }

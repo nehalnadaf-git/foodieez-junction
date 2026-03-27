@@ -644,6 +644,31 @@ const CartDrawer = () => {
                     </div>
                   )}
 
+                  {/* ── Delivery Info Banner (when delivery is ON) ── */}
+                  {settings.delivery.deliveryEnabled && totalItems > 0 && (() => {
+                    const dMin = settings.delivery.deliveryMinimumOrder;
+                    const dCharge = settings.delivery.deliveryCharge;
+                    const belowMin = dMin > 0 && grandTotal < dMin;
+                    return (
+                      <div
+                        className={`rounded-xl border px-4 py-3 ${belowMin ? "border-amber-500/30 bg-amber-500/8" : "border-primary/20 bg-primary/5"}`}
+                        style={{ borderLeft: "3px solid #FFC200" }}
+                      >
+                        <p className={`text-xs font-bold ${belowMin ? "text-amber-400" : "text-primary"}`}>
+                          {belowMin
+                            ? `⚠ Add Rs.${dMin - grandTotal} more to unlock Home Delivery`
+                            : "🛵 Home Delivery Available"}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                          {dMin > 0 && `Min. order Rs.${dMin}`}
+                          {dMin > 0 && " · "}
+                          {dCharge === 0 ? "Free Delivery" : `Rs.${dCharge} delivery charge`}
+                          {settings.delivery.deliveryEstimatedTime && ` · ${settings.delivery.deliveryEstimatedTime}`}
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   {/* ── Cart Summary ── */}
                   {totalItems > 0 && (
                     <div className="space-y-1 rounded-xl border border-foreground/10 bg-foreground/5 px-3 py-3">

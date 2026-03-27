@@ -63,6 +63,17 @@ function mapToSettings(kv: Record<string, string>): AppSettings {
     reviews: {
       showReviewsOnHome: bool("reviews.showReviewsOnHome", d.reviews.showReviewsOnHome),
     },
+    delivery: {
+      deliveryEnabled: bool("delivery.deliveryEnabled", d.delivery.deliveryEnabled),
+      deliveryCharge: num("delivery.deliveryCharge", d.delivery.deliveryCharge),
+      deliveryMinimumOrder: num("delivery.deliveryMinimumOrder", d.delivery.deliveryMinimumOrder),
+      deliveryAreaDescription: str("delivery.deliveryAreaDescription", d.delivery.deliveryAreaDescription),
+      deliveryMaxDistance: str("delivery.deliveryMaxDistance", d.delivery.deliveryMaxDistance),
+      deliveryEstimatedTime: str("delivery.deliveryEstimatedTime", d.delivery.deliveryEstimatedTime),
+      deliveryAvailableAreas: str("delivery.deliveryAvailableAreas", d.delivery.deliveryAvailableAreas),
+      deliveryInstructions: str("delivery.deliveryInstructions", d.delivery.deliveryInstructions),
+      deliveryWhatsappNumber: str("delivery.deliveryWhatsappNumber", d.delivery.deliveryWhatsappNumber),
+    },
   };
 }
 
@@ -90,6 +101,11 @@ function settingsToPairs(patch: Partial<AppSettings>): { key: string; value: str
   if (patch.reviews) {
     for (const [k, v] of Object.entries(patch.reviews)) {
       add(`reviews.${k}`, v);
+    }
+  }
+  if (patch.delivery) {
+    for (const [k, v] of Object.entries(patch.delivery)) {
+      add(`delivery.${k}`, v);
     }
   }
   return pairs;

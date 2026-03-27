@@ -30,6 +30,18 @@ export interface ReviewSettings {
   showReviewsOnHome: boolean;
 }
 
+export interface DeliverySettings {
+  deliveryEnabled: boolean;
+  deliveryCharge: number;
+  deliveryMinimumOrder: number;
+  deliveryAreaDescription: string;
+  deliveryMaxDistance: string;
+  deliveryEstimatedTime: string;
+  deliveryAvailableAreas: string;
+  deliveryInstructions: string;
+  deliveryWhatsappNumber: string;
+}
+
 export type ReviewStatus = "pending" | "approved";
 
 export interface ReviewRecord {
@@ -55,6 +67,7 @@ export interface AppSettings {
   upi: UpiSettings;
   restaurant: RestaurantSettings;
   reviews: ReviewSettings;
+  delivery: DeliverySettings;
 }
 
 export const STORAGE_KEYS = {
@@ -95,9 +108,22 @@ export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = {
   showReviewsOnHome: true,
 };
 
+export const DEFAULT_DELIVERY_SETTINGS: DeliverySettings = {
+  deliveryEnabled: false,
+  deliveryCharge: 0,
+  deliveryMinimumOrder: 0,
+  deliveryAreaDescription: "",
+  deliveryMaxDistance: "",
+  deliveryEstimatedTime: "30-45 mins",
+  deliveryAvailableAreas: "",
+  deliveryInstructions: "",
+  deliveryWhatsappNumber: "",
+};
+
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   order: DEFAULT_ORDER_SETTINGS,
   upi: DEFAULT_UPI_SETTINGS,
   restaurant: DEFAULT_RESTAURANT_SETTINGS,
   reviews: DEFAULT_REVIEW_SETTINGS,
+  delivery: DEFAULT_DELIVERY_SETTINGS,
 };

@@ -27,6 +27,12 @@ export const submit = mutation({
     ),
     totalAmount: v.number(),
     status: v.string(),
+    // ─── Delivery ───────────────────────────────────────────────────────────
+    deliveryAddress: v.optional(v.string()),
+    deliveryMapLink: v.optional(v.string()),
+    deliveryCharge: v.optional(v.number()),
+    deliveryArea: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Date.now() inside a Convex mutation runs on the SERVER — never the
@@ -40,6 +46,7 @@ export const submit = mutation({
     return { serverTimestamp };
   },
 });
+
 
 export const updateStatus = mutation({
   args: { id: v.id("orders"), status: v.string() },

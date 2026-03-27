@@ -55,7 +55,7 @@ export default defineSchema({
   orders: defineTable({
     orderId: v.string(),
     customerName: v.string(),
-    orderType: v.string(), // "dine-in" | "takeaway"
+    orderType: v.string(), // "dine-in" | "takeaway" | "delivery" | "qr-dine-in"
     tableNumber: v.optional(v.string()),
     paymentMethod: v.string(), // "cash" | "upi"
     specialInstructions: v.optional(v.string()),
@@ -71,6 +71,12 @@ export default defineSchema({
     totalAmount: v.number(),
     status: v.string(), // "pending" | "preparing" | "completed" | "cancelled"
     serverTimestamp: v.optional(v.number()), // Convex server time (ms) — always IST-accurate
+    // ─── Delivery fields ───────────────────────────────────────────────────
+    deliveryAddress: v.optional(v.string()),
+    deliveryMapLink: v.optional(v.string()),
+    deliveryCharge: v.optional(v.number()),
+    deliveryArea: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
   }).index("by_orderId", ["orderId"]).index("by_status", ["status"]),
 
   // ── NEW TABLES (localStorage → Convex migration) ──

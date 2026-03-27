@@ -92,14 +92,36 @@ export default function AdminOrdersPage() {
       </div>
 
       <div className="flex items-center gap-2 mt-3 text-xs flex-wrap">
-        <span className="bg-white/10 px-2 py-1 rounded text-white/80">
+        <span className={`px-2 py-1 rounded text-white/80 ${order.orderType === "delivery" ? "bg-primary/20 border border-primary/30 text-primary font-bold" : "bg-white/10"}`}>
           {order.orderType === "dine-in"
             ? `Dine-In — Table ${order.tableNumber}`
             : order.orderType === "qr-dine-in"
             ? `QR Dine-In — Table ${order.tableNumber}`
+            : order.orderType === "delivery"
+            ? "🛵 Home Delivery"
             : "Takeaway"}
         </span>
       </div>
+
+      {/* Delivery details */}
+      {order.orderType === "delivery" && (
+        <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5 space-y-1 text-xs">
+          {order.customerPhone && (
+            <p className="text-white/70"><span className="text-primary font-bold">Phone:</span> {order.customerPhone}</p>
+          )}
+          {(order as any).deliveryAddress && (
+            <p className="text-white/70"><span className="text-primary font-bold">Address:</span> {(order as any).deliveryAddress}</p>
+          )}
+          {(order as any).deliveryMapLink && (
+            <p className="text-white/70 break-all"><span className="text-primary font-bold">Map:</span>{" "}
+              <a href={(order as any).deliveryMapLink} target="_blank" rel="noreferrer" className="underline text-primary/80">View Location</a>
+            </p>
+          )}
+          {(order as any).deliveryCharge !== undefined && (
+            <p className="text-white/70"><span className="text-primary font-bold">Delivery Charge:</span> Rs.{(order as any).deliveryCharge}</p>
+          )}
+        </div>
+      )}
 
       {/* Items */}
       <div className="mt-4 pt-4 border-t border-white/10 max-h-32 overflow-y-auto pr-1">
