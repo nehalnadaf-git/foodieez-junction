@@ -83,33 +83,15 @@ const CartDrawer = () => {
     }
   }, [session]);
 
-  // Body scroll lock — works on iOS Safari too (position:fixed technique)
+  // Body scroll lock
   useEffect(() => {
     if (isCartOpen) {
-      const scrollY = window.scrollY;
       document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${scrollY}px`;
-      document.body.style.width = "100%";
     } else {
-      const savedTop = document.body.style.top;
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      if (savedTop) {
-        window.scrollTo(0, parseInt(savedTop) * -1);
-      }
     }
     return () => {
-      const savedTop = document.body.style.top;
       document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.top = "";
-      document.body.style.width = "";
-      if (savedTop) {
-        window.scrollTo(0, parseInt(savedTop) * -1);
-      }
     };
   }, [isCartOpen]);
 
