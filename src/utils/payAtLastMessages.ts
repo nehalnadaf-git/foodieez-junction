@@ -211,7 +211,7 @@ export function generateFinalBill(params: {
   const mergedItems = Array.from(mergedItemsMap.values());
 
   lines.push(SEP);
-  lines.push("CONSOLIDATED BILL");
+  lines.push("Total order");
   lines.push(SEP);
 
   mergedItems.forEach((item, idx) => {
