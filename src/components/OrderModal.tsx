@@ -14,7 +14,6 @@ import { generateDeliveryMessage } from "@/utils/deliveryMessages";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { formatOrderDateTime } from "@/utils/formatDateTime";
-import { useAction } from "convex/react";
 
 type OrderType = "dine-in" | "takeaway" | "delivery" | null;
 type PaymentMethod = "cash" | "upi" | null;
@@ -121,7 +120,6 @@ const OrderModal = () => {
   }, []);
 
   const submitOrder = useMutation(api.orders.submit);
-  const getServerTime = useAction(api.serverTime.now);
 
   // ── Order submission ───────────────────────────────────────────────────────
   const sendOrder = useCallback(async () => {
@@ -263,7 +261,7 @@ const OrderModal = () => {
     orderType, payment, orderId, isSubmitting, items, subtotal, totalSavings,
     grandTotal, name, tableNo, scannedTableNumber, settings, specialInstructions,
     submitOrder, clearCart, isDelivery, deliveryCharge, deliveryAddress,
-    deliveryMapLink, customerPhone, delivery, getServerTime,
+    deliveryMapLink, customerPhone, delivery,
   ]);
 
   const stepSegments = Array.from({ length: totalSteps }, (_, i) => i + 1);

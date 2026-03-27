@@ -291,8 +291,12 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   const grandTotal = Math.round(items.reduce((sum, ci) => sum + ci.itemTotal, 0));
   const totalPrice = grandTotal;
 
-  const remainingForMinimum = 0;
-  const meetsMinimumOrder = true;
+  const remainingForMinimum =
+    minimumOrderValue > 0
+      ? Math.max(0, minimumOrderValue - grandTotal)
+      : 0;
+  const meetsMinimumOrder = minimumOrderValue === 0 || grandTotal >= minimumOrderValue;
+
 
   return (
     <CartContext.Provider
