@@ -75,9 +75,9 @@ export function generateDeliveryMessage(input: DeliveryMessageInput): string {
     addrLines.forEach((l) => lines.push(l));
   }
 
-  if (input.deliveryMapLink.trim()) {
-    lines.push(`Map Link : ${input.deliveryMapLink.trim()}`);
-  }
+  // NOTE: Map link is intentionally NOT included in the WhatsApp message.
+  // It is saved to the database for the admin panel only.
+
 
   // ── Items ─────────────────────────────────────────────────────────────────
   lines.push(SEP);
