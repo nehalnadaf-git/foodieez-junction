@@ -727,10 +727,6 @@ const CartDrawer = () => {
                           background: payAtLastChecked ? "#FFC200" : "transparent",
                           border: `2px solid ${payAtLastChecked ? "#FFC200" : "hsl(var(--foreground) / 0.3)"}`,
                         }}
-                        onClick={() => {
-                          setPayAtLastChecked((v) => !v);
-                          if (finalPayStep === "select_payment") setFinalPayStep("idle");
-                        }}
                       >
                         {payAtLastChecked && (
                           <motion.div

@@ -15,18 +15,25 @@ import {
 import { toast } from "sonner";
 import { formatOrderDateTime } from "@/utils/formatDateTime";
 
-type OrderStatus = "pending" | "preparing" | "completed" | "cancelled";
+type OrderStatus = "pending" | "preparing" | "completed";
+type TabValue = "pending-dine-in" | "pending-takeaway" | "pending-delivery" | "preparing" | "completed";
 
 export default function AdminOrdersPage() {
   const orders = useQuery(api.orders.getOrders);
   const updateStatus = useMutation(api.orders.updateStatus);
   const deleteOrder = useMutation(api.orders.deleteOrder);
-  const [mobileTab, setMobileTab] = useState<OrderStatus>("pending");
+  const [mobileTab, setMobileTab] = useState<TabValue>("pending-delivery");
 
   const pendingOrders = orders?.filter((o) => o.status === "pending") || [];
+  
+  const pendingDineInOrders = pendingOrders.filter(
+    (o) => o.orderType === "dine-in" || o.orderType === "qr-dine-in"
+  );
+  const pendingTakeawayOrders = pendingOrders.filter((o) => o.orderType === "takeaway");
+  const pendingDeliveryOrders = pendingOrders.filter((o) => o.orderType === "delivery");
+
   const preparingOrders = orders?.filter((o) => o.status === "preparing") || [];
   const completedOrders = orders?.filter((o) => o.status === "completed") || [];
-  const cancelledOrders = orders?.filter((o) => o.status === "cancelled") || [];
 
   const handleUpdateStatus = async (id: string, status: string) => {
     try {
@@ -40,6 +47,11 @@ export default function AdminOrdersPage() {
   const handleArchive = (id: string) => {
     deleteOrder({ id: id as any });
     toast.success("Order archived");
+  };
+
+  const handleDelete = (id: string) => {
+    deleteOrder({ id: id as any });
+    toast.success("Order deleted");
   };
 
   const renderOrderCard = (order: any) => (
@@ -160,7 +172,7 @@ export default function AdminOrdersPage() {
               Accept
             </button>
             <button
-              onClick={() => handleUpdateStatus(order._id, "cancelled")}
+              onClick={() => handleDelete(order._id)}
               title="Cancel order"
               className="px-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-sm transition-colors"
             >
@@ -177,7 +189,7 @@ export default function AdminOrdersPage() {
               Mark Ready
             </button>
             <button
-              onClick={() => handleUpdateStatus(order._id, "cancelled")}
+              onClick={() => handleDelete(order._id)}
               title="Cancel order"
               className="px-3 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg text-sm transition-colors"
             >
@@ -185,7 +197,7 @@ export default function AdminOrdersPage() {
             </button>
           </>
         )}
-        {(order.status === "completed" || order.status === "cancelled") && (
+        {(order.status === "completed") && (
           <button
             onClick={() => handleArchive(order._id)}
             className="flex-1 border border-white/10 text-white/50 hover:bg-white/5 hover:text-white py-2 rounded-lg text-sm font-semibold transition-colors"
@@ -197,18 +209,20 @@ export default function AdminOrdersPage() {
     </div>
   );
 
-  const mobileTabs: { value: OrderStatus; label: string; count: number; activeBg: string }[] = [
-    { value: "pending", label: "Pending", count: pendingOrders.length, activeBg: "bg-amber-400/20 text-amber-300 border-amber-400/40" },
+  const mobileTabs: { value: TabValue; label: string; count: number; activeBg: string }[] = [
+    { value: "pending-delivery", label: "Delivery", count: pendingDeliveryOrders.length, activeBg: "bg-yellow-400/20 text-yellow-300 border-yellow-400/40" },
+    { value: "pending-takeaway", label: "Takeaway", count: pendingTakeawayOrders.length, activeBg: "bg-orange-400/20 text-orange-300 border-orange-400/40" },
+    { value: "pending-dine-in", label: "Dine-In", count: pendingDineInOrders.length, activeBg: "bg-amber-400/20 text-amber-300 border-amber-400/40" },
     { value: "preparing", label: "Prep", count: preparingOrders.length, activeBg: "bg-blue-400/20 text-blue-300 border-blue-400/40" },
     { value: "completed", label: "Done", count: completedOrders.length, activeBg: "bg-emerald-400/20 text-emerald-300 border-emerald-400/40" },
-    { value: "cancelled", label: "Cancel", count: cancelledOrders.length, activeBg: "bg-red-400/20 text-red-300 border-red-400/40" },
   ];
 
-  const mobileOrdersMap: Record<OrderStatus, any[]> = {
-    pending: pendingOrders,
+  const mobileOrdersMap: Record<TabValue, any[]> = {
+    "pending-delivery": pendingDeliveryOrders,
+    "pending-takeaway": pendingTakeawayOrders,
+    "pending-dine-in": pendingDineInOrders,
     preparing: preparingOrders,
     completed: completedOrders,
-    cancelled: cancelledOrders,
   };
 
   return (
@@ -265,16 +279,42 @@ export default function AdminOrdersPage() {
             </div>
           </div>
 
-          {/* ── DESKTOP: 4-column Kanban ── */}
-          <div className="hidden lg:grid grid-cols-4 gap-4" style={{ height: "calc(100vh - 14rem)" }}>
-            {/* Pending */}
+          {/* ── DESKTOP: 3-column Grid Kanban (2 rows) ── */}
+          <div className="hidden lg:grid grid-cols-3 gap-4" style={{ height: "calc(100vh - 14rem)" }}>
+            {/* Pending: Delivery */}
             <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-              <h3 className="flex items-center gap-2 text-amber-400 font-bold mb-4 shrink-0">
-                <Clock className="w-5 h-5" /> Pending ({pendingOrders.length})
+              <h3 className="flex items-center gap-2 text-yellow-400 font-bold mb-4 shrink-0">
+                <Clock className="w-5 h-5" /> Pending ({pendingDeliveryOrders.length}) — Delivery
               </h3>
               <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {pendingOrders.map(renderOrderCard)}
-                {pendingOrders.length === 0 && (
+                {pendingDeliveryOrders.map(renderOrderCard)}
+                {pendingDeliveryOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No pending orders</div>
+                )}
+              </div>
+            </div>
+
+            {/* Pending: Takeaway */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-orange-400 font-bold mb-4 shrink-0">
+                <Clock className="w-5 h-5" /> Pending ({pendingTakeawayOrders.length}) — Takeaway
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {pendingTakeawayOrders.map(renderOrderCard)}
+                {pendingTakeawayOrders.length === 0 && (
+                  <div className="text-white/30 text-sm text-center mt-10">No pending orders</div>
+                )}
+              </div>
+            </div>
+
+            {/* Pending: Dine-In */}
+            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
+              <h3 className="flex items-center gap-2 text-amber-400 font-bold mb-4 shrink-0">
+                <Clock className="w-5 h-5" /> Pending ({pendingDineInOrders.length}) — Dine-In
+              </h3>
+              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+                {pendingDineInOrders.map(renderOrderCard)}
+                {pendingDineInOrders.length === 0 && (
                   <div className="text-white/30 text-sm text-center mt-10">No pending orders</div>
                 )}
               </div>
@@ -302,19 +342,6 @@ export default function AdminOrdersPage() {
                 {completedOrders.map(renderOrderCard)}
                 {completedOrders.length === 0 && (
                   <div className="text-white/30 text-sm text-center mt-10">No completed orders</div>
-                )}
-              </div>
-            </div>
-
-            {/* Cancelled */}
-            <div className="flex flex-col rounded-2xl border border-white/10 bg-white/5 p-4 overflow-hidden">
-              <h3 className="flex items-center gap-2 text-red-400 font-bold mb-4 shrink-0">
-                <XCircle className="w-5 h-5" /> Cancelled ({cancelledOrders.length})
-              </h3>
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {cancelledOrders.map(renderOrderCard)}
-                {cancelledOrders.length === 0 && (
-                  <div className="text-white/30 text-sm text-center mt-10">No cancelled orders</div>
                 )}
               </div>
             </div>
