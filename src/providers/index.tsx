@@ -13,6 +13,7 @@ import { ConvexClientProvider } from "./ConvexClientProvider";
 import { SessionExpiryBanner } from "@/components/cart/SessionExpiryBanner";
 import { usePayAtLast } from "@/hooks/usePayAtLast";
 import { useCart } from "@/context/CartContext";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 /** Inner wrapper that has access to both CartContext and PayAtLast state */
 function SessionExpiryBannerWrapper() {
@@ -39,6 +40,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                     <Toaster />
                     <Sonner />
                     <SessionExpiryBannerWrapper />
+                    <PWAInstallPrompt />
                     {children}
                   </CartProvider>
                 </TableProvider>

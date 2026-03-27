@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans, Manrope } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/providers";
@@ -50,8 +50,22 @@ const restaurantSchema = {
   },
 };
 
+export const viewport: Viewport = {
+  themeColor: "#FFC200",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://foodieezjunction.com"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "FoodieeZ Junction",
+  },
   title: {
     template: "%s | FoodieeZ Junction",
     default: "FoodieeZ Junction – Authentic Street Food, Hubballi",
@@ -80,9 +94,9 @@ export const metadata: Metadata = {
     description: "Best street food in Hubballi. Open 2 PM – 11 PM.",
   },
   icons: {
-    icon: "/new-hero-plate.png",
-    shortcut: "/new-hero-plate.png",
-    apple: "/new-hero-plate.png",
+    icon: "/icon-192.png",
+    shortcut: "/icon-192.png",
+    apple: "/apple-icon.png",
   },
   robots: { index: true, follow: true },
 };
