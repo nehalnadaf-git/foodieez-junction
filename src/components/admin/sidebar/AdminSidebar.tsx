@@ -17,6 +17,7 @@ import {
   Menu,
   X,
   PackageCheck,
+  Truck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -30,7 +31,7 @@ const navItems = [
   { href: "/admin/upi", label: "UPI Management", icon: CreditCard },
   { href: "/admin/reviews", label: "Review Management", icon: Star },
   { href: "/admin/offers", label: "Offers & Discounts", icon: Tag },
-  { href: "/admin/settings", label: "Settings", icon: Sliders },
+  { href: "/admin/settings", label: "Settings & Delivery", icon: Sliders },
 ] as const;
 
 export function AdminSidebar() {

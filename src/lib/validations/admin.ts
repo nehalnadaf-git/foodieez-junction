@@ -14,7 +14,9 @@ export const orderSettingsSchema = z.object({
   closeTimeIst: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format"),
   estimatedWaitTime: z.string().min(3, "Enter wait time"),
   orderIdPrefix: z.string().min(1, "Prefix is required").max(5, "Max 5 chars"),
+  minimumOrderValue: z.number().min(0, "Cannot be negative"),
   maxQuantityPerItem: z.number().min(1, "Min 1").max(50, "Max 50"),
+  dineInEnabled: z.boolean(),
 });
 
 export type OrderSettingsInput = z.infer<typeof orderSettingsSchema>;
