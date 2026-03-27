@@ -1,4 +1,5 @@
 export interface OrderSettings {
+  storeName: string;
   dineInWhatsappNumber: string;
   takeawayWhatsappNumber: string;
   openTimeIst: string;
@@ -77,6 +78,7 @@ export const STORAGE_KEYS = {
 } as const;
 
 export const DEFAULT_ORDER_SETTINGS: OrderSettings = {
+  storeName: "FoodieeZ Junction",
   dineInWhatsappNumber: "+91 9743862836",
   takeawayWhatsappNumber: "+91 9743862836",
   openTimeIst: "14:00",

@@ -36,6 +36,7 @@ function mapToSettings(kv: Record<string, string>): AppSettings {
   const d = DEFAULT_APP_SETTINGS;
   return {
     order: {
+      storeName: str("order.storeName", d.order.storeName),
       dineInWhatsappNumber: str("order.dineInWhatsappNumber", d.order.dineInWhatsappNumber),
       takeawayWhatsappNumber: str("order.takeawayWhatsappNumber", d.order.takeawayWhatsappNumber),
       openTimeIst: str("order.openTimeIst", d.order.openTimeIst),

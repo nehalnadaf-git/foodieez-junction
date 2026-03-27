@@ -8,6 +8,7 @@ export const adminLoginSchema = z.object({
 export type AdminLoginInput = z.infer<typeof adminLoginSchema>;
 
 export const orderSettingsSchema = z.object({
+  storeName: z.string().min(1, "Store name is required"),
   dineInWhatsappNumber: z.string().min(10, "Enter a valid number"),
   takeawayWhatsappNumber: z.string().min(10, "Enter a valid number"),
   openTimeIst: z.string().regex(/^\d{2}:\d{2}$/, "Use HH:MM format"),

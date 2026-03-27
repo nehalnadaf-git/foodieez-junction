@@ -195,7 +195,7 @@ const OrderModal = () => {
           paymentMethod: payment as "cash" | "upi",
           upiId: settings.upi.upiId,
           estimatedDeliveryTime: delivery.deliveryEstimatedTime,
-          restaurantName: settings.restaurant.restaurantName,
+          restaurantName: settings.order.storeName,
           specialInstructions,
         });
       } else {
@@ -213,7 +213,7 @@ const OrderModal = () => {
           paymentMethod: payment as "cash" | "upi",
           estimatedTime: settings.order.estimatedWaitTime,
           upiId: settings.upi.upiId,
-          restaurantName: settings.restaurant.restaurantName,
+          restaurantName: settings.order.storeName,
           specialInstructions,
         });
       }
@@ -233,7 +233,7 @@ const OrderModal = () => {
           deliveryAddress: deliveryAddress.trim(), deliveryMapLink: deliveryMapLink.trim(),
           paymentMethod: payment as "cash" | "upi", upiId: settings.upi.upiId,
           estimatedDeliveryTime: delivery.deliveryEstimatedTime,
-          restaurantName: settings.restaurant.restaurantName, specialInstructions,
+          restaurantName: settings.order.storeName, specialInstructions,
         });
       } else {
         msgText = buildWhatsAppMessage({
@@ -243,7 +243,7 @@ const OrderModal = () => {
           tableNumber: orderType === "dine-in" ? tableNo.trim() : null,
           scannedTableNumber, paymentMethod: payment as "cash" | "upi",
           estimatedTime: settings.order.estimatedWaitTime, upiId: settings.upi.upiId,
-          restaurantName: settings.restaurant.restaurantName, specialInstructions,
+          restaurantName: settings.order.storeName, specialInstructions,
         });
       }
       const url = buildWhatsAppUrl(targetNumber, msgText);

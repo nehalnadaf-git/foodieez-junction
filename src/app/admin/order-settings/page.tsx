@@ -52,6 +52,13 @@ export default function AdminOrderSettingsPage() {
         onSubmit={form.handleSubmit(onSubmit)}
         className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
       >
+        <div>
+          <label className="mb-1 block text-xs uppercase tracking-wider text-white/70">
+            Store Name (WhatsApp)
+          </label>
+          <input {...form.register("storeName")} className={inputClass} />
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs uppercase tracking-wider text-white/70">

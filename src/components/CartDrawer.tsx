@@ -166,7 +166,7 @@ const CartDrawer = () => {
       cartItems: items,
       orderTotal: grandTotal,
       specialInstructions,
-      restaurantName: settings.restaurant.restaurantName,
+      restaurantName: settings.order.storeName,
       serverTimestamp,
     });
 
@@ -211,7 +211,7 @@ const CartDrawer = () => {
       currentSpecialInstructions: specialInstructions,
       paymentMethod,
       upiId: settings.upi.upiId,
-      restaurantName: settings.restaurant.restaurantName,
+      restaurantName: settings.order.storeName,
       serverTimestamp,
     });
 
@@ -261,7 +261,7 @@ const CartDrawer = () => {
       currentSpecialInstructions: "",
       paymentMethod,
       upiId: settings.upi.upiId,
-      restaurantName: settings.restaurant.restaurantName,
+      restaurantName: settings.order.storeName,
       serverTimestamp,
     });
 
