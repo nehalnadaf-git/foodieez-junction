@@ -1,11 +1,16 @@
 /**
  * WhatsApp message generators for the Pay at Last feature.
  * Zero emojis. Clean plain text. All prices in Rs. format.
+ *
+ * All timestamps come from Convex server (Date.now() in mutation)
+ * or from the session's per-order timestamp field (also server-set).
+ * Never from the customer device clock.
  */
 
 import type { DineSession, PayAtLastItemRecord } from "@/hooks/usePayAtLast";
 import type { CartItem } from "@/context/CartContext";
 import { cartItemsToRecords } from "@/hooks/usePayAtLast";
+import { formatOrderDateTime, formatOrderTime } from "@/utils/formatDateTime";
 
 const SEP = "--------------------";
 
@@ -51,7 +56,8 @@ function formatCartItemLines(item: CartItem, idx: number): string[] {
 }
 
 // ─── Format 1: Kitchen message per Pay at Last order ─────────────────────────
-// Sent every time Pay at Last is ticked and Pay Now is clicked.
+// Sent every time Pay at Last order is placed.
+// serverTimestamp comes from Convex mutation return value.
 
 export function generateKitchenMessage(params: {
   session: DineSession;
@@ -60,13 +66,25 @@ export function generateKitchenMessage(params: {
   orderTotal: number;
   specialInstructions: string;
   restaurantName: string;
+  serverTimestamp: number; // From Convex server — never device clock
 }): string {
-  const { session, currentOrderNumber, cartItems, orderTotal, specialInstructions, restaurantName } = params;
+  const {
+    session,
+    currentOrderNumber,
+    cartItems,
+    orderTotal,
+    specialInstructions,
+    restaurantName,
+    serverTimestamp,
+  } = params;
+
   const lines: string[] = [];
 
+  // Header
   lines.push(SEP);
   lines.push(restaurantName.toUpperCase());
   lines.push(`ORDER : ${session.orderId}`);
+  lines.push(formatOrderDateTime(serverTimestamp)); // IST server time, no label
   lines.push(SEP);
   lines.push(`DINE-IN  |  TABLE ${session.tableNumber}`);
   lines.push(`Customer : ${session.customerName}`);
@@ -97,23 +115,10 @@ export function generateKitchenMessage(params: {
   return lines.join("\n");
 }
 
-// ─── Format 2 & 3: Final consolidated bill (Cash or UPI) ────────────────────
-// Sent when Final Bill is clicked. ALL items from every order round are
-// merged into one single list — same dish ordered multiple times is summed.
-
-/** Merge key: name + size */
-function mergeKey(name: string, size: string): string {
-  return `${name}||${size}`;
-}
-
-interface MergedItem {
-  name: string;
-  size: "small" | "large" | "single";
-  quantity: number;
-  offerType: string;
-  offerPercentage?: number;
-  itemTotal: number;
-}
+// ─── Format 2 & 3: Final consolidated bill (Cash or UPI) ─────────────────────
+// Shows each order as a separate section with its time label (ORDER 1 | 9:00 AM)
+// and one grand total at the bottom.
+// serverTimestamp = time the Final Bill was triggered (from Convex or session).
 
 export function generateFinalBill(params: {
   session: DineSession;
@@ -125,6 +130,7 @@ export function generateFinalBill(params: {
   paymentMethod: "cash" | "upi";
   upiId: string;
   restaurantName: string;
+  serverTimestamp: number; // From Convex server — final bill time
 }): string {
   const {
     session,
@@ -136,95 +142,65 @@ export function generateFinalBill(params: {
     paymentMethod,
     upiId,
     restaurantName,
+    serverTimestamp,
   } = params;
 
   const lines: string[] = [];
 
-  // ── Step 1: Build merged item map ──────────────────────────────────────────
-  // Walk every past order record + current cart → merge by name+size.
-  const mergedMap = new Map<string, MergedItem>();
+  // Build current order object (not yet in session)
+  const currentOrderNumber = session.totalOrdersCount + 1;
+  const currentItems: PayAtLastItemRecord[] = cartItemsToRecords(currentCartItems);
 
-  const addRecord = (item: PayAtLastItemRecord) => {
-    const key = mergeKey(item.name, item.size);
-    const existing = mergedMap.get(key);
-    if (existing) {
-      existing.quantity += item.quantity;
-      existing.itemTotal += item.itemTotal;
-    } else {
-      mergedMap.set(key, {
-        name: item.name,
-        size: item.size,
-        quantity: item.quantity,
-        offerType: item.offerType,
-        offerPercentage: item.offerPercentage,
-        itemTotal: item.itemTotal,
-      });
-    }
-  };
+  // All orders: past (in session) + current cart
+  const allOrders = [
+    ...session.orders,
+    {
+      orderNumber: currentOrderNumber,
+      timestamp: serverTimestamp, // server time for current order
+      items: currentItems,
+      orderTotal: currentOrderTotal,
+      orderSubtotal: currentOrderSubtotal,
+      orderSavings: currentOrderSavings,
+      specialInstructions: currentSpecialInstructions,
+    },
+  ];
 
-  // Past orders saved in session
-  for (const order of session.orders) {
-    for (const item of order.items) {
-      addRecord(item);
-    }
-  }
-
-  // Current cart (not yet saved to session when Final Bill is clicked
-  // for the case where the cart still has items)
-  const currentRecords = cartItemsToRecords(currentCartItems);
-  for (const item of currentRecords) {
-    addRecord(item);
-  }
-
-  // ── Step 2: Collect all special notes ─────────────────────────────────────
-  const allNotes = [
-    ...session.orders.map((o) => o.specialInstructions?.trim() ?? ""),
-    currentSpecialInstructions.trim(),
-  ].filter(Boolean);
-
-  // ── Step 3: Grand totals ───────────────────────────────────────────────────
+  // Grand totals
   const totalSubtotal = session.runningSubtotal + currentOrderSubtotal;
   const totalSavings = session.runningSavings + currentOrderSavings;
   const totalDue = session.runningTotal + currentOrderTotal;
 
-  // ── Step 4: Build message ─────────────────────────────────────────────────
-
-  // Header
+  // ── Header ────────────────────────────────────────────────────────────────
   lines.push(SEP);
   lines.push(restaurantName.toUpperCase());
   lines.push(`ORDER : ${session.orderId}`);
+  lines.push(formatOrderDateTime(serverTimestamp)); // Payment time — IST, no label
   lines.push(SEP);
   lines.push(`DINE-IN  |  TABLE ${session.tableNumber}`);
   lines.push(`Customer : ${session.customerName}`);
   lines.push(`Payment  : ${paymentMethod === "cash" ? "Cash" : "UPI"}`);
 
-  // Single merged item list
-  lines.push(SEP);
-  lines.push(`ALL ORDERS`);
-  lines.push(SEP);
-
-  const mergedItems = Array.from(mergedMap.values());
-  mergedItems.forEach((item, idx) => {
-    const nameLine = `${idx + 1}. ${item.name}${sizeTag(item.size)}`;
-    const parts: string[] = [`x${item.quantity}`];
-    if (item.offerType === "bogo") {
-      parts.push("BOGO Free");
-    } else if (item.offerType === "percentage") {
-      parts.push(`${Math.round(item.offerPercentage ?? 0)}% Off`);
-    }
-    parts.push(rs(item.itemTotal));
-    lines.push(nameLine);
-    lines.push(`   ${parts.join("  |  ")}`);
-    if (idx < mergedItems.length - 1) lines.push("");
-  });
-
-  // Combined notes (if any)
-  if (allNotes.length > 0) {
+  // ── Per-order sections with time labels ───────────────────────────────────
+  for (const order of allOrders) {
+    const orderTimeLabel = formatOrderTime(order.timestamp);
     lines.push(SEP);
-    lines.push(`NOTES : ${allNotes.join(" | ")}`);
+    lines.push(`ORDER ${order.orderNumber}  |  ${orderTimeLabel}`);
+    lines.push(SEP);
+
+    order.items.forEach((item, idx) => {
+      const [nameLine, priceLine] = formatRecordLines(item, idx);
+      lines.push(nameLine);
+      lines.push(priceLine);
+      if (idx < order.items.length - 1) lines.push("");
+    });
+
+    if (order.specialInstructions?.trim()) {
+      lines.push(SEP);
+      lines.push(`NOTE : ${order.specialInstructions.trim()}`);
+    }
   }
 
-  // Grand totals
+  // ── Grand totals ──────────────────────────────────────────────────────────
   lines.push(SEP);
   lines.push(`Subtotal  : ${rs(totalSubtotal)}`);
   if (totalSavings > 0) {
@@ -233,7 +209,7 @@ export function generateFinalBill(params: {
   lines.push(`TOTAL DUE : ${rs(totalDue)}`);
   lines.push(SEP);
 
-  // UPI link (only when UPI selected)
+  // ── UPI link ──────────────────────────────────────────────────────────────
   if (paymentMethod === "upi") {
     const amount = Math.round(totalDue);
     const upiLink = [

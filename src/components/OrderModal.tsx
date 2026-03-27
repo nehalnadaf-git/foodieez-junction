@@ -12,6 +12,7 @@ import { buildWhatsAppMessage, buildWhatsAppUrl } from "../utils/whatsapp";
 import type { WhatsAppLineItem } from "../utils/whatsapp";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { formatOrderDateTime } from "@/utils/formatDateTime";
 
 type OrderType = "dine-in" | "takeaway" | null;
 type PaymentMethod = "cash" | "upi" | null;
@@ -110,83 +111,118 @@ const OrderModal = () => {
 
   const submitOrder = useMutation(api.orders.submit);
 
-  const sendOrder = useCallback(() => {
+  const sendOrder = useCallback(async () => {
     if (!orderType || !payment || !orderId || isSubmitting) return;
 
     setIsSubmitting(true);
 
-    const orderItems: WhatsAppLineItem[] = items.map((cartItem: CartItem) => {
-      return {
-        name: cartItem.name,
-        itemId: cartItem.itemId,
-        size: cartItem.size,
-        quantity: cartItem.quantity,
-        billedQuantity: cartItem.billedQuantity,
-        originalPrice: cartItem.originalPrice,
-        finalPrice: cartItem.finalPrice,
-        itemTotal: cartItem.itemTotal,
-        savings: cartItem.savings,
-        offerType: cartItem.offerType,
-        offerPercentage: cartItem.offerPercentage,
-      };
-    });
-
-    const message = buildWhatsAppMessage({
-      orderId,
-      items: orderItems,
-      subtotal,
-      totalSavings,
-      totalAmount: grandTotal,
-      customerName: name.trim(),
-      orderType,
-      tableNumber: orderType === "dine-in" ? tableNo.trim() : null,
-      scannedTableNumber,
-      paymentMethod: payment,
-      estimatedTime: settings.order.estimatedWaitTime,
-      upiId: settings.upi.upiId,
-      restaurantName: settings.restaurant.restaurantName,
-      specialInstructions,
-    });
+    const orderItems: WhatsAppLineItem[] = items.map((cartItem: CartItem) => ({
+      name: cartItem.name,
+      itemId: cartItem.itemId,
+      size: cartItem.size,
+      quantity: cartItem.quantity,
+      billedQuantity: cartItem.billedQuantity,
+      originalPrice: cartItem.originalPrice,
+      finalPrice: cartItem.finalPrice,
+      itemTotal: cartItem.itemTotal,
+      savings: cartItem.savings,
+      offerType: cartItem.offerType,
+      offerPercentage: cartItem.offerPercentage,
+    }));
 
     const targetNumber =
       orderType === "dine-in"
         ? settings.order.dineInWhatsappNumber
         : settings.order.takeawayWhatsappNumber;
 
-    // Open WhatsApp synchronously within the click handler so the browser
-    // does NOT block the new tab (user-gesture trust is lost after any await).
-    window.open(buildWhatsAppUrl(targetNumber, message), "_blank");
-    setShowSuccess(true);
+    // Open a blank tab BEFORE the async await so the browser counts this
+    // as a user-gesture-initiated popup and does not block it.
+    const waTab = window.open("", "_blank");
 
-    // Save order to the database in the background — failure is non-critical,
-    // the customer's WhatsApp message already carries all order details.
-    submitOrder({
-      orderId,
-      customerName: name.trim(),
-      orderType:
-        orderType === "dine-in" && scannedTableNumber
-          ? "qr-dine-in"
-          : orderType,
-      tableNumber: orderType === "dine-in" ? tableNo.trim() : undefined,
-      paymentMethod: payment,
-      specialInstructions: specialInstructions.trim() || undefined,
-      items: orderItems.map((item: WhatsAppLineItem) => ({
-        name: item.name,
-        itemId: item.itemId,
-        size: item.size,
-        quantity: item.quantity,
-        price: item.finalPrice,
-      })),
-      totalAmount: grandTotal,
-      status: "pending",
-    }).catch((e) => {
+    try {
+      // ⏱ Get the server timestamp — Date.now() runs inside Convex, not on device
+      const result = await submitOrder({
+        orderId,
+        customerName: name.trim(),
+        orderType:
+          orderType === "dine-in" && scannedTableNumber
+            ? "qr-dine-in"
+            : orderType,
+        tableNumber: orderType === "dine-in" ? tableNo.trim() : undefined,
+        paymentMethod: payment,
+        specialInstructions: specialInstructions.trim() || undefined,
+        items: orderItems.map((item: WhatsAppLineItem) => ({
+          name: item.name,
+          itemId: item.itemId,
+          size: item.size,
+          quantity: item.quantity,
+          price: item.finalPrice,
+        })),
+        totalAmount: grandTotal,
+        status: "pending",
+      });
+
+      // Format IST timestamp from Convex server time
+      const dateTime = formatOrderDateTime(result.serverTimestamp);
+
+      const message = buildWhatsAppMessage({
+        orderId,
+        dateTime,
+        items: orderItems,
+        subtotal,
+        totalSavings,
+        totalAmount: grandTotal,
+        customerName: name.trim(),
+        orderType,
+        tableNumber: orderType === "dine-in" ? tableNo.trim() : null,
+        scannedTableNumber,
+        paymentMethod: payment,
+        estimatedTime: settings.order.estimatedWaitTime,
+        upiId: settings.upi.upiId,
+        restaurantName: settings.restaurant.restaurantName,
+        specialInstructions,
+      });
+
+      // Navigate the already-opened tab to the WhatsApp URL
+      if (waTab) {
+        waTab.location.href = buildWhatsAppUrl(targetNumber, message);
+      } else {
+        window.open(buildWhatsAppUrl(targetNumber, message), "_blank");
+      }
+    } catch (e) {
       console.error("Failed to save order to database:", e);
-    });
+      // Fallback: use device time if Convex call failed (very rare)
+      const fallbackDateTime = formatOrderDateTime(Date.now());
+      const message = buildWhatsAppMessage({
+        orderId,
+        dateTime: fallbackDateTime,
+        items: orderItems,
+        subtotal,
+        totalSavings,
+        totalAmount: grandTotal,
+        customerName: name.trim(),
+        orderType,
+        tableNumber: orderType === "dine-in" ? tableNo.trim() : null,
+        scannedTableNumber,
+        paymentMethod: payment,
+        estimatedTime: settings.order.estimatedWaitTime,
+        upiId: settings.upi.upiId,
+        restaurantName: settings.restaurant.restaurantName,
+        specialInstructions,
+      });
+      if (waTab) {
+        waTab.location.href = buildWhatsAppUrl(targetNumber, message);
+      } else {
+        window.open(buildWhatsAppUrl(targetNumber, message), "_blank");
+      }
+    }
+
+    setShowSuccess(true);
 
     window.setTimeout(() => {
       clearCart();
       setIsSubmitting(false);
-      setIsOpen(false); // Auto-close after success + cart clear
+      setIsOpen(false);
     }, 2500);
   }, [
     orderType,

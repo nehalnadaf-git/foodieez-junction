@@ -13,6 +13,7 @@ import {
   Smartphone,
 } from "lucide-react";
 import { toast } from "sonner";
+import { formatOrderDateTime } from "@/utils/formatDateTime";
 
 type OrderStatus = "pending" | "preparing" | "completed" | "cancelled";
 
@@ -65,6 +66,11 @@ export default function AdminOrdersPage() {
             {order.orderId}
           </h4>
           <p className="text-white/60 text-sm">{order.customerName}</p>
+          {order.serverTimestamp && (
+            <p className="text-white/40 text-xs mt-0.5 font-mono">
+              {formatOrderDateTime(order.serverTimestamp)}
+            </p>
+          )}
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="text-primary font-bold">₹{order.totalAmount}</span>

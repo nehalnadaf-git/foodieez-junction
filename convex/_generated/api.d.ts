@@ -14,6 +14,7 @@ import type * as orders from "../orders.js";
 import type * as restaurantStatus from "../restaurantStatus.js";
 import type * as restaurantTables from "../restaurantTables.js";
 import type * as reviews from "../reviews.js";
+import type * as serverTime from "../serverTime.js";
 import type * as socialLinks from "../socialLinks.js";
 
 import type {
@@ -29,6 +30,7 @@ declare const fullApi: ApiFromModules<{
   restaurantStatus: typeof restaurantStatus;
   restaurantTables: typeof restaurantTables;
   reviews: typeof reviews;
+  serverTime: typeof serverTime;
   socialLinks: typeof socialLinks;
 }>;
 

@@ -29,7 +29,15 @@ export const submit = mutation({
     status: v.string(),
   },
   handler: async (ctx, args) => {
-    await ctx.db.insert("orders", args);
+    // Date.now() inside a Convex mutation runs on the SERVER — never the
+    // customer's device. This guarantees an accurate, tamper-proof timestamp.
+    const serverTimestamp = Date.now();
+
+    await ctx.db.insert("orders", { ...args, serverTimestamp });
+
+    // Return the server timestamp so the client can embed it in the
+    // WhatsApp pre-filled message without touching the device clock.
+    return { serverTimestamp };
   },
 });
 

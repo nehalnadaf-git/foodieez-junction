@@ -16,6 +16,7 @@ export interface WhatsAppLineItem {
 
 export interface BuildWhatsAppMessageInput {
   orderId: string;
+  dateTime: string;           // IST-formatted server timestamp e.g. "27/03/26, 9:00 AM"
   items: WhatsAppLineItem[];
   subtotal: number;
   totalSavings: number;
@@ -83,6 +84,7 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
   lines.push(D);
   lines.push(input.restaurantName.toUpperCase());
   lines.push(`ORDER : ${input.orderId}`);
+  lines.push(input.dateTime);   // Server IST timestamp — line 3, no label
   lines.push(D);
 
   // Type + customer on the same block, keep it easy to read at a glance

@@ -22,6 +22,9 @@ import { SessionExpiredOverlay } from "@/components/cart/SessionExpiredOverlay";
 import { generateKitchenMessage, generateFinalBill, calcFinalBillTotal } from "@/utils/payAtLastMessages";
 import { buildWhatsAppUrl } from "@/utils/whatsapp";
 import { toast } from "sonner";
+import { useAction } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { formatOrderDateTime } from "@/utils/formatDateTime";
 
 
 // ─── Type ─────────────────────────────────────────────────────────────────────
@@ -129,11 +132,13 @@ const CartDrawer = () => {
 
   // ── Shared WhatsApp sender helper ────────────────────────────────────────────
   const getTargetPhone = () => settings.order.dineInWhatsappNumber;
+  // Convex action — Date.now() runs on server, never on customer device
+  const getServerTime = useAction(api.serverTime.now);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // PAY NOW — PAY AT LAST TICKED (kitchen message, cart stays)
   // ─────────────────────────────────────────────────────────────────────────────
-  const handlePayAtLastOrder = useCallback(() => {
+  const handlePayAtLastOrder = useCallback(async () => {
     if (!restaurantOpen || totalItems === 0 || isSending) return;
 
     setIsSending(true);
@@ -148,10 +153,13 @@ const CartDrawer = () => {
     // 2. Calculate order number BEFORE adding to session
     const newOrderNumber = activeSession.totalOrdersCount + 1;
 
-    // 3. Save order to session
+    // 3. Get server timestamp from Convex (runs on server, not device)
+    const serverTimestamp = await getServerTime({}).catch(() => Date.now());
+
+    // 4. Save order to session (uses server timestamp for per-order recording)
     addOrderToSession(items, specialInstructions, subtotal, totalSavings, grandTotal);
 
-    // 4. Build kitchen message
+    // 5. Build kitchen message with server timestamp
     const msg = generateKitchenMessage({
       session: activeSession,
       currentOrderNumber: newOrderNumber,
@@ -159,10 +167,14 @@ const CartDrawer = () => {
       orderTotal: grandTotal,
       specialInstructions,
       restaurantName: settings.restaurant.restaurantName,
+      serverTimestamp,
     });
 
-    // 6. Open WhatsApp synchronously
-    window.open(buildWhatsAppUrl(getTargetPhone(), msg), "_blank");
+    // 6. Open WhatsApp — open blank first (popup safety), then navigate
+    const waTab = window.open("", "_blank");
+    const url = buildWhatsAppUrl(getTargetPhone(), msg);
+    if (waTab) waTab.location.href = url;
+    else window.open(url, "_blank");
 
     // 7. Clear the cart so the next round starts fresh
     clearCart();
@@ -176,16 +188,19 @@ const CartDrawer = () => {
   }, [
     restaurantOpen, totalItems, isSending, session, nameInput, scannedTableNumber,
     settings, items, specialInstructions, subtotal, totalSavings, grandTotal,
-    initSession, addOrderToSession, clearCart, getTargetPhone, setIsCartOpen,
+    initSession, addOrderToSession, clearCart, getTargetPhone, getServerTime, setIsCartOpen,
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
   // PAY NOW — FINAL BILL (Pay at Last unticked, all orders consolidated)
   // ─────────────────────────────────────────────────────────────────────────────
-  const handleFinalBill = useCallback((paymentMethod: "cash" | "upi") => {
+  const handleFinalBill = useCallback(async (paymentMethod: "cash" | "upi") => {
     if (!session || isSending) return;
 
     setIsSending(true);
+
+    // Get server timestamp for the final bill header
+    const serverTimestamp = await getServerTime({}).catch(() => Date.now());
 
     const msg = generateFinalBill({
       session,
@@ -197,9 +212,13 @@ const CartDrawer = () => {
       paymentMethod,
       upiId: settings.upi.upiId,
       restaurantName: settings.restaurant.restaurantName,
+      serverTimestamp,
     });
 
-    window.open(buildWhatsAppUrl(getTargetPhone(), msg), "_blank");
+    const waTab = window.open("", "_blank");
+    const url = buildWhatsAppUrl(getTargetPhone(), msg);
+    if (waTab) waTab.location.href = url;
+    else window.open(url, "_blank");
 
     // Clear session + cart
     clearSession();
@@ -211,7 +230,8 @@ const CartDrawer = () => {
     toast.success("Thank you for dining with us!");
   }, [
     session, isSending, items, grandTotal, subtotal, totalSavings,
-    specialInstructions, settings, clearSession, clearCart, getTargetPhone, setIsCartOpen,
+    specialInstructions, settings, clearSession, clearCart,
+    getTargetPhone, getServerTime, setIsCartOpen,
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -227,8 +247,10 @@ const CartDrawer = () => {
   // ─────────────────────────────────────────────────────────────────────────────
   // EXPIRED SESSION — force final payment
   // ─────────────────────────────────────────────────────────────────────────────
-  const handleExpiredPay = useCallback((paymentMethod: "cash" | "upi") => {
+  const handleExpiredPay = useCallback(async (paymentMethod: "cash" | "upi") => {
     if (!session) return;
+
+    const serverTimestamp = await getServerTime({}).catch(() => Date.now());
 
     const msg = generateFinalBill({
       session,
@@ -240,16 +262,21 @@ const CartDrawer = () => {
       paymentMethod,
       upiId: settings.upi.upiId,
       restaurantName: settings.restaurant.restaurantName,
+      serverTimestamp,
     });
 
-    window.open(buildWhatsAppUrl(getTargetPhone(), msg), "_blank");
+    const waTab = window.open("", "_blank");
+    const url = buildWhatsAppUrl(getTargetPhone(), msg);
+    if (waTab) waTab.location.href = url;
+    else window.open(url, "_blank");
+
     clearSession();
     clearCart();
     setPayAtLastChecked(false);
     toast.success("Thank you for dining with us!");
   }, [
     session, items, grandTotal, subtotal, totalSavings,
-    settings, clearSession, clearCart, getTargetPhone,
+    settings, clearSession, clearCart, getTargetPhone, getServerTime,
   ]);
 
   // ─────────────────────────────────────────────────────────────────────────────
