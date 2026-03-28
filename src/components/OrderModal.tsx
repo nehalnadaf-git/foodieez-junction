@@ -8,7 +8,7 @@ import type { CartItem } from "@/context/CartContext";
 import { useAppSettings } from "@/context/AppSettingsContext";
 import { useTableNumber } from "@/hooks/useTableNumber";
 import { generateOrderToken } from "@/utils/order";
-import { buildWhatsAppMessage, buildWhatsAppUrl } from "../utils/whatsapp";
+import { buildWhatsAppMessage, openWhatsApp } from "../utils/whatsapp";
 import type { WhatsAppLineItem } from "../utils/whatsapp";
 import { generateDeliveryMessage } from "@/utils/deliveryMessages";
 import { useMutation } from "convex/react";
@@ -147,9 +147,6 @@ const OrderModal = () => {
       ? settings.order.dineInWhatsappNumber
       : settings.order.takeawayWhatsappNumber;
 
-    // Open blank tab before async call to avoid popup blocking
-    const waTab = window.open("", "_blank");
-
     try {
       const result = await submitOrder({
         orderId,
@@ -218,9 +215,7 @@ const OrderModal = () => {
         });
       }
 
-      const url = buildWhatsAppUrl(targetNumber, msgText);
-      if (waTab) waTab.location.href = url;
-      else window.open(url, "_blank");
+      openWhatsApp(targetNumber, msgText);
     } catch {
       // Fallback using device time
       const dateTime = formatOrderDateTime(Date.now());
@@ -246,9 +241,7 @@ const OrderModal = () => {
           restaurantName: settings.order.storeName, specialInstructions,
         });
       }
-      const url = buildWhatsAppUrl(targetNumber, msgText);
-      if (waTab) waTab.location.href = url;
-      else window.open(url, "_blank");
+      openWhatsApp(targetNumber, msgText);
     }
 
     setShowSuccess(true);

@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { mergeSocialLinks } from "@/utils/social";
+import { openWhatsApp } from "@/utils/whatsapp";
 
 const WhatsAppIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
@@ -14,13 +15,17 @@ const WhatsAppIcon = () => (
 
 const ContactSection = () => {
   const links = useQuery(api.socialLinks.getAll);
-  const whatsappLink = useMemo(() => {
-    if (links === undefined) {
-      return "https://wa.me/919743862836";
-    }
+  const whatsappPhone = useMemo(() => {
+    if (links === undefined) return "919743862836";
     const wa = mergeSocialLinks(links).find((link) => link.platform === "whatsapp");
-    return wa?.url || "https://wa.me/919743862836";
+    // Extract digits from URL like https://wa.me/919743862836 or raw number
+    const raw = wa?.url || "919743862836";
+    return raw.replace(/\D/g, "") || "919743862836";
   }, [links]);
+
+  const handleWhatsApp = useCallback(() => {
+    openWhatsApp(whatsappPhone, "");
+  }, [whatsappPhone]);
 
   return (
   <section id="contact" className="py-20 md:py-28 relative overflow-hidden">
@@ -49,14 +54,12 @@ const ContactSection = () => {
         </p>
 
         {/* WhatsApp CTA */}
-        <motion.a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
+        <motion.button
+          onClick={handleWhatsApp}
           whileHover={{ scale: 1.04 }}
           whileTap={{ scale: 0.97 }}
           className="inline-flex items-center gap-3 px-9 py-4 rounded-full font-heading
-                     font-semibold text-base shimmer mb-10 shadow-lg transition-all"
+                     font-semibold text-base shimmer mb-10 shadow-lg transition-all cursor-pointer"
           style={{
             background: "rgba(37, 211, 102, 0.10)",
             border: "1px solid rgba(37, 211, 102, 0.28)",
@@ -66,7 +69,7 @@ const ContactSection = () => {
         >
           <WhatsAppIcon />
           Chat on WhatsApp
-        </motion.a>
+        </motion.button>
       </motion.div>
     </div>
   </section>

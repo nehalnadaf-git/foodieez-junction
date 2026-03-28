@@ -151,14 +151,24 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
   return lines.join("\n");
 }
 
-// ─── URL builder ─────────────────────────────────────────────────────────────
+// ─── WhatsApp opener ──────────────────────────────────────────────────────────
+//
+// On mobile  → whatsapp:// deep link opens the app directly, no "Open in App"
+// On desktop → web.whatsapp.com in a new tab
 
-export function buildWhatsAppUrl(phoneNumber: string, message: string): string {
+export function openWhatsApp(phoneNumber: string, message: string): void {
   const digits = phoneNumber.replace(/\D/g, "");
-  const withCountryCode =
-    digits.startsWith("91") && digits.length > 10
-      ? digits
-      : `91${digits}`;
+  const phone =
+    digits.startsWith("91") && digits.length > 10 ? digits : `91${digits}`;
+  const encoded = encodeURIComponent(message);
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-  return `https://wa.me/${withCountryCode}?text=${encodeURIComponent(message)}`;
+  if (isMobile) {
+    window.location.href = `whatsapp://send?phone=${phone}&text=${encoded}`;
+  } else {
+    window.open(
+      `https://web.whatsapp.com/send?phone=${phone}&text=${encoded}`,
+      "_blank"
+    );
+  }
 }

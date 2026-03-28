@@ -20,7 +20,7 @@ import { useSessionExpiry } from "@/hooks/useSessionExpiry";
 import { RunningBillBanner } from "@/components/cart/RunningBillBanner";
 import { SessionExpiredOverlay } from "@/components/cart/SessionExpiredOverlay";
 import { generateKitchenMessage, generateFinalBill, calcFinalBillTotal } from "@/utils/payAtLastMessages";
-import { buildWhatsAppUrl } from "@/utils/whatsapp";
+import { openWhatsApp } from "@/utils/whatsapp";
 import { toast } from "sonner";
 import { useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -152,11 +152,8 @@ const CartDrawer = () => {
       serverTimestamp,
     });
 
-    // 6. Open WhatsApp — open blank first (popup safety), then navigate
-    const waTab = window.open("", "_blank");
-    const url = buildWhatsAppUrl(getTargetPhone(), msg);
-    if (waTab) waTab.location.href = url;
-    else window.open(url, "_blank");
+    // 6. Open WhatsApp — mobile deep link or web fallback
+    openWhatsApp(getTargetPhone(), msg);
 
     // 7. Clear the cart so the next round starts fresh
     clearCart();
@@ -197,10 +194,7 @@ const CartDrawer = () => {
       serverTimestamp,
     });
 
-    const waTab = window.open("", "_blank");
-    const url = buildWhatsAppUrl(getTargetPhone(), msg);
-    if (waTab) waTab.location.href = url;
-    else window.open(url, "_blank");
+    openWhatsApp(getTargetPhone(), msg);
 
     // Clear session + cart
     clearSession();
@@ -247,10 +241,7 @@ const CartDrawer = () => {
       serverTimestamp,
     });
 
-    const waTab = window.open("", "_blank");
-    const url = buildWhatsAppUrl(getTargetPhone(), msg);
-    if (waTab) waTab.location.href = url;
-    else window.open(url, "_blank");
+    openWhatsApp(getTargetPhone(), msg);
 
     clearSession();
     clearCart();
