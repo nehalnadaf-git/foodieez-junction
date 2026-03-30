@@ -41,16 +41,16 @@ export interface Category {
 export type MenuCategory = Category;
 
 export const categories: Category[] = [
-  { id: "veg", name: "Veg Items", image: "/Products/Veg items/Veg Fried Rice.png?v=2" },
-  { id: "noodles", name: "Noodles", image: "/Products/Noodles/Chicken Noodles.png" },
-  { id: "soups", name: "Soups", image: "/Products/Soups/Veg Manchurian Soup.png" },
-  { id: "nonveg-rice", name: "Non Veg Rice", image: "/Products/Non-veg rice/Chicken Fried Rice.png" },
-  { id: "chicken", name: "Chicken", image: "/Products/Chicken/Chicken 65.png" },
-  { id: "manchurian", name: "Manchurian & Bhel", image: "/Products/Manchurian and Bhel/Gobi Manchurian.png" },
-  { id: "omelette", name: "Omelette", image: "/Products/Omelette/Omelette (double).png" },
-  { id: "combo", name: "Combo Rice", image: "/Products/Combo rice/Veg combination rice.png" },
-  { id: "fries", name: "French Fries", image: "/Products/French fries/Regular Salt French Fries.png" },
-  { id: "momos", name: "Momos", image: "/Products/Momos/Veg Steam Momos.png" },
+  { id: "veg", name: "Veg Items", image: "/Products/Veg items/Veg Fried Rice.webp" },
+  { id: "noodles", name: "Noodles", image: "/Products/Noodles/Chicken Noodles.webp" },
+  { id: "soups", name: "Soups", image: "/Products/Soups/Veg Manchurian Soup.webp" },
+  { id: "nonveg-rice", name: "Non Veg Rice", image: "/Products/Non-veg rice/Chicken Fried Rice.webp" },
+  { id: "chicken", name: "Chicken", image: "/Products/Chicken/Chicken 65.webp" },
+  { id: "manchurian", name: "Manchurian & Bhel", image: "/Products/Manchurian and Bhel/Gobi Manchurian.webp" },
+  { id: "omelette", name: "Omelette", image: "/Products/Omelette/Omelette (double).webp" },
+  { id: "combo", name: "Combo Rice", image: "/Products/Combo rice/Veg Manchurian Rice.webp" },
+  { id: "fries", name: "French Fries", image: "/Products/French fries/Regular Salt French Fries.webp" },
+  { id: "momos", name: "Momos", image: "/Products/Momos/Veg Steam Momos.webp" },
 ];
 
 // Map category id to string path for menu items
@@ -60,7 +60,7 @@ categories.forEach((c) => {
 });
 
 export const getCategoryImage = (categoryId: string): string =>
-  categoryImageMap[categoryId] || "/Products/Veg items/Veg Fried Rice.png?v=2";
+  categoryImageMap[categoryId] || "/Products/Veg items/Veg Fried Rice.webp";
 
 export const menuItems: MenuItem[] = [
   // Veg Items
@@ -71,7 +71,7 @@ export const menuItems: MenuItem[] = [
     isVeg: true,
     priceSmall: 40,
     priceLarge: 60,
-    image: "/Products/Veg items/Veg Fried Rice.png?v=2",
+    image: "/Products/Veg items/Veg Fried Rice.webp",
   },
   {
     id: "v2",
@@ -80,7 +80,7 @@ export const menuItems: MenuItem[] = [
     isVeg: true,
     priceSmall: 60,
     priceLarge: 80,
-    image: "/Products/Veg items/Veg Manchurian Rice.png",
+    image: "/Products/Veg items/Veg Manchurian Rice.webp",
   },
   {
     id: "v3",
@@ -88,7 +88,7 @@ export const menuItems: MenuItem[] = [
     category: "veg",
     isVeg: true,
     price: 70,
-    image: "/Products/Veg items/Veg Tripple Rice.png",
+    image: "/Products/Veg items/Veg Tripple Rice.webp",
   },
   {
     id: "v4",
@@ -97,7 +97,7 @@ export const menuItems: MenuItem[] = [
     isVeg: true,
     priceSmall: 40,
     priceLarge: 60,
-    image: "/Products/Veg items/Veg Noodles.png",
+    image: "/Products/Veg items/Veg Noodles.webp",
   },
   {
     id: "v5",
@@ -105,7 +105,7 @@ export const menuItems: MenuItem[] = [
     category: "veg",
     isVeg: true,
     price: 60,
-    image: "/Products/Veg items/Gobi Noodles.png",
+    image: "/Products/Veg items/Gobi Noodles.webp",
   },
   {
     id: "v6",
@@ -113,7 +113,7 @@ export const menuItems: MenuItem[] = [
     category: "veg",
     isVeg: true,
     price: 60,
-    image: "/Products/Veg items/Veg Hakka Noodles.png",
+    image: "/Products/Veg items/Veg Hakka Noodles.webp",
   },
   {
     id: "v7",
@@ -122,7 +122,7 @@ export const menuItems: MenuItem[] = [
     isVeg: true,
     priceSmall: 60,
     priceLarge: 80,
-    image: "/Products/Veg items/Veg Manchurian Noodles.png",
+    image: "/Products/Veg items/Veg Manchurian Noodles.webp",
   },
 
   // Noodles
@@ -133,7 +133,7 @@ export const menuItems: MenuItem[] = [
     isVeg: false,
     priceSmall: 70,
     priceLarge: 100,
-    image: "/Products/Noodles/Chicken Noodles.png",
+    image: "/Products/Noodles/Chicken Noodles.webp",
   },
   {
     id: "n2",
@@ -141,7 +141,7 @@ export const menuItems: MenuItem[] = [
     category: "noodles",
     isVeg: false,
     price: 90,
-    image: "/Products/Noodles/Chicken Hakka Noodles.png",
+    image: "/Products/Noodles/Chicken Hakka Noodles.webp",
   },
   {
     id: "n3",
@@ -149,7 +149,7 @@ export const menuItems: MenuItem[] = [
     category: "noodles",
     isVeg: false,
     price: 70,
-    image: "/Products/Noodles/Egg Hakka Noodles.png",
+    image: "/Products/Noodles/Egg Hakka Noodles.webp",
   },
   {
     id: "n4",
@@ -157,7 +157,7 @@ export const menuItems: MenuItem[] = [
     category: "noodles",
     isVeg: false,
     price: 70,
-    image: "/Products/Noodles/Gobi Egg Noodles.png",
+    image: "/Products/Noodles/Gobi Egg Noodles.webp",
   },
   {
     id: "n5",
@@ -166,7 +166,7 @@ export const menuItems: MenuItem[] = [
     isVeg: false,
     priceSmall: 50,
     priceLarge: 70,
-    image: "/Products/Noodles/Egg Noodles.png",
+    image: "/Products/Noodles/Egg Noodles.webp",
   },
 
   // Soups
@@ -176,7 +176,7 @@ export const menuItems: MenuItem[] = [
     category: "soups",
     isVeg: true,
     price: 40,
-    image: "/Products/Soups/Veg Manchurian Soup.png",
+    image: "/Products/Soups/Veg Manchurian Soup.webp",
   },
   {
     id: "s2",
@@ -184,7 +184,7 @@ export const menuItems: MenuItem[] = [
     category: "soups",
     isVeg: false,
     price: 60,
-    image: "/Products/Soups/Egg Manchurian Soup.png",
+    image: "/Products/Soups/Egg Manchurian Soup.webp",
   },
   {
     id: "s3",
@@ -192,7 +192,7 @@ export const menuItems: MenuItem[] = [
     category: "soups",
     isVeg: false,
     price: 70,
-    image: "/Products/Soups/Chicken Manchurian Soup.png",
+    image: "/Products/Soups/Chicken Manchurian Soup.webp",
   },
 
   // Non Veg Rice
@@ -203,7 +203,7 @@ export const menuItems: MenuItem[] = [
     isVeg: false,
     priceSmall: 70,
     priceLarge: 100,
-    image: "/Products/Non-veg rice/Chicken Fried Rice.png",
+    image: "/Products/Non-veg rice/Chicken Fried Rice.webp",
   },
   {
     id: "nr2",
@@ -211,7 +211,7 @@ export const menuItems: MenuItem[] = [
     category: "nonveg-rice",
     isVeg: false,
     price: 140,
-    image: "/Products/Non-veg rice/Chicken Triple Rice.png",
+    image: "/Products/Non-veg rice/Chicken Triple Rice.webp",
   },
 
   // Chicken
@@ -221,7 +221,7 @@ export const menuItems: MenuItem[] = [
     category: "chicken",
     isVeg: false,
     price: 90,
-    image: "/Products/Chicken/Chicken Manchurian.png",
+    image: "/Products/Chicken/Chicken Manchurian.webp",
   },
   {
     id: "c2",
@@ -229,7 +229,7 @@ export const menuItems: MenuItem[] = [
     category: "chicken",
     isVeg: false,
     price: 100,
-    image: "/Products/Chicken/Chicken Chilli.png",
+    image: "/Products/Chicken/Chicken Chilli.webp",
   },
   {
     id: "c3",
@@ -237,7 +237,7 @@ export const menuItems: MenuItem[] = [
     category: "chicken",
     isVeg: false,
     price: 90,
-    image: "/Products/Chicken/Chicken 65.png",
+    image: "/Products/Chicken/Chicken 65.webp",
   },
   {
     id: "c4",
@@ -246,7 +246,7 @@ export const menuItems: MenuItem[] = [
     isVeg: false,
     priceSmall: 50,
     priceLarge: 70,
-    image: "/Products/Chicken/Egg fried rice.png",
+    image: "/Products/Chicken/Egg fried rice.webp",
   },
 
   // Manchurian & Bhel
@@ -257,7 +257,7 @@ export const menuItems: MenuItem[] = [
     isVeg: true,
     priceSmall: 40,
     priceLarge: 50,
-    image: "/Products/Manchurian and Bhel/Gobi Manchurian.png",
+    image: "/Products/Manchurian and Bhel/Gobi Manchurian.webp",
   },
   {
     id: "m2",
@@ -265,7 +265,7 @@ export const menuItems: MenuItem[] = [
     category: "manchurian",
     isVeg: true,
     price: 60,
-    image: "/Products/Manchurian and Bhel/Gobi 65.png",
+    image: "/Products/Manchurian and Bhel/Gobi 65.webp",
   },
   {
     id: "m3",
@@ -273,7 +273,7 @@ export const menuItems: MenuItem[] = [
     category: "manchurian",
     isVeg: true,
     price: 50,
-    image: "/Products/Manchurian and Bhel/Chinese Bhel.png",
+    image: "/Products/Manchurian and Bhel/Chinese Bhel.webp",
   },
 
   // Omelette
@@ -283,7 +283,7 @@ export const menuItems: MenuItem[] = [
     category: "omelette",
     isVeg: false,
     price: 40,
-    image: "/Products/Omelette/Omelette (double).png",
+    image: "/Products/Omelette/Omelette (double).webp",
   },
   {
     id: "o2",
@@ -291,7 +291,7 @@ export const menuItems: MenuItem[] = [
     category: "omelette",
     isVeg: false,
     price: 20,
-    image: "/Products/Omelette/Half fry (single).png",
+    image: "/Products/Omelette/Half fry (single).webp",
   },
   {
     id: "o3",
@@ -299,7 +299,7 @@ export const menuItems: MenuItem[] = [
     category: "omelette",
     isVeg: false,
     price: 40,
-    image: "/Products/Omelette/Half fry (double).png",
+    image: "/Products/Omelette/Half fry (double).webp",
   },
 
   // Combo Rice
@@ -309,7 +309,7 @@ export const menuItems: MenuItem[] = [
     category: "combo",
     isVeg: true,
     price: 70,
-    image: "/Products/Combo rice/Veg combination rice.png",
+    image: "/Products/Combo rice/Veg Manchurian Rice.webp",
   },
   {
     id: "cb2",
@@ -317,7 +317,7 @@ export const menuItems: MenuItem[] = [
     category: "combo",
     isVeg: false,
     price: 90,
-    image: "/Products/Combo rice/Egg Combination Rice.png",
+    image: "/Products/Combo rice/Egg Combination Rice.webp",
   },
   {
     id: "cb3",
@@ -325,7 +325,7 @@ export const menuItems: MenuItem[] = [
     category: "combo",
     isVeg: false,
     price: 100,
-    image: "/Products/Combo rice/Chicken combination rice.png",
+    image: "/Products/Combo rice/Chicken combination rice.webp",
   },
 
   // French Fries & Momos
@@ -335,7 +335,7 @@ export const menuItems: MenuItem[] = [
     category: "fries",
     isVeg: true,
     price: 50,
-    image: "/Products/French fries/Regular Salt French Fries.png",
+    image: "/Products/French fries/Regular Salt French Fries.webp",
   },
   {
     id: "f2",
@@ -343,7 +343,7 @@ export const menuItems: MenuItem[] = [
     category: "fries",
     isVeg: true,
     price: 60,
-    image: "/Products/French fries/Peri Peri French fries.png",
+    image: "/Products/French fries/Peri Peri French fries.webp",
   },
 
   // Momos
@@ -353,7 +353,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 60,
-    image: "/Products/Momos/Veg Steam Momos.png",
+    image: "/Products/Momos/Veg Steam Momos.webp",
   },
   {
     id: "mo2",
@@ -361,7 +361,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 70,
-    image: "/Products/Momos/Veg Cheese Steam Momos.png",
+    image: "/Products/Momos/Veg Cheese Steam Momos.webp",
   },
   {
     id: "mo3",
@@ -369,7 +369,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 70,
-    image: "/Products/Momos/Veg Peri-Peri Steam Momos.png",
+    image: "/Products/Momos/Veg Peri-Peri Steam Momos.webp",
   },
   {
     id: "mo4",
@@ -377,7 +377,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 80,
-    image: "/Products/Momos/Chicken Steam Momos.png",
+    image: "/Products/Momos/Chicken Steam Momos.webp",
   },
   {
     id: "mo5",
@@ -385,7 +385,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 90,
-    image: "/Products/Momos/Chicken Cheese Steam Momos.png",
+    image: "/Products/Momos/Chicken Cheese Steam Momos.webp",
   },
   {
     id: "mo6",
@@ -393,7 +393,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 90,
-    image: "/Products/Momos/Chicken Peri Peri Steam Momos.png",
+    image: "/Products/Momos/Chicken Peri Peri Steam Momos.webp",
   },
   {
     id: "mo7",
@@ -401,7 +401,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 70,
-    image: "/Products/Momos/Dumpling Momos.png",
+    image: "/Products/Momos/Dumpling Momos.webp",
   },
   {
     id: "mo8",
@@ -409,7 +409,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 70,
-    image: "/Products/Momos/Veg fried momos.png",
+    image: "/Products/Momos/Veg fried momos.webp",
   },
   {
     id: "mo9",
@@ -417,7 +417,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 80,
-    image: "/Products/Momos/Veg Cheese Fried Momos.png",
+    image: "/Products/Momos/Veg Cheese Fried Momos.webp",
   },
   {
     id: "mo10",
@@ -425,7 +425,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: true,
     price: 80,
-    image: "/Products/Momos/Veg Peri-Peri Fried Momos.png",
+    image: "/Products/Momos/Veg Peri-Peri Fried Momos.webp",
   },
   {
     id: "mo11",
@@ -433,7 +433,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 90,
-    image: "/Products/Momos/Chicken Fried Momos.png",
+    image: "/Products/Momos/Chicken Fried Momos.webp",
   },
   {
     id: "mo12",
@@ -441,7 +441,7 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 100,
-    image: "/Products/Momos/Chicken Cheese Fried Momos.png",
+    image: "/Products/Momos/Chicken Cheese Fried Momos.webp",
   },
   {
     id: "mo13",
@@ -449,6 +449,6 @@ export const menuItems: MenuItem[] = [
     category: "momos",
     isVeg: false,
     price: 100,
-    image: "/Products/Momos/Chicken Peri Peri Fried Momos.png",
+    image: "/Products/Momos/Chicken Peri Peri Fried Momos.webp",
   },
 ];

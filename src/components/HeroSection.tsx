@@ -335,7 +335,7 @@ const HeroSection = () => {
               >
                 <div className="hero-halo" />
                 <Image
-                  src="/new-hero-plate.png"
+                  src="/new-hero-plate.webp"
                   alt="Delicious Fried Chicken Plate — FoodieeZ Junction Hubballi"
                   width={650}
                   height={600}
