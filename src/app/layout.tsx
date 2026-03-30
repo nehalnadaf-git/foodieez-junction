@@ -94,9 +94,9 @@ export const metadata: Metadata = {
     description: "Best street food in Hubballi. Open 2 PM – 11 PM.",
   },
   icons: {
-    icon: "/icon-192.png",
-    shortcut: "/icon-192.png",
-    apple: "/apple-icon.png",
+    icon: "/new-hero-plate.webp",
+    shortcut: "/new-hero-plate.webp",
+    apple: "/new-hero-plate.webp",
   },
   robots: { index: true, follow: true },
 };
