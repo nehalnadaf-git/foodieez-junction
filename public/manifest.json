@@ -1,13 +1,14 @@
 {
-  "name": "Foodieez Junction",
-  "short_name": "Foodieez",
+  "name": "FoodieeZ Junction",
+  "short_name": "FoodieeZ",
   "description": "Street Food Restaurant Hubballi — Fresh momos, noodles, rice & more",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#FFC200",
+  "background_color": "#0d0b09",
+  "theme_color": "#f5a623",
   "orientation": "portrait",
   "icons": [
+    { "src": "/new-hero-plate.webp", "sizes": "any", "type": "image/webp", "purpose": "any" },
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
