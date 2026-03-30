@@ -24,7 +24,7 @@ export interface MenuItem {
   isSpecial?: boolean;
   offerType?: OfferType;
   offerPercentage?: number;
-  /** Path to individual product image inside /public (e.g. "/Products/Chicken/Chicken 65.png") */
+  /** Path to individual product image inside /public (e.g. "/Products/Chicken/Chicken 65.webp") */
   image?: string;
   imageSource?: "upload" | "url";
 
