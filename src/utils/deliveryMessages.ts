@@ -131,5 +131,10 @@ export function generateDeliveryMessage(input: DeliveryMessageInput): string {
   lines.push(`Est. Delivery : ${input.estimatedDeliveryTime}`);
   lines.push(SEP);
 
+  // ── Payment disclaimer ───────────────────────────────────────────────────
+  lines.push("Do not pay until");
+  lines.push("order is confirmed.");
+  lines.push(SEP);
+
   return lines.join("\n");
 }

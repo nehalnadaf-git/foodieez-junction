@@ -148,6 +148,11 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
   }
   lines.push(D);
 
+  // ── Payment disclaimer ───────────────────────────────────────────────────
+  lines.push("Do not pay until");
+  lines.push("order is confirmed.");
+  lines.push(D);
+
   return lines.join("\n");
 }
 
