@@ -47,20 +47,22 @@ const FloatingCart = () => {
                 className="w-[24px] h-[24px]"
                 style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.2))" }}
               />
-              <motion.span
-                key={totalItems}
-                initial={{ scale: 1.5 }}
-                animate={{ scale: 1 }}
-                className="absolute -top-3 -right-3 w-[22px] h-[22px] rounded-full text-[11px] font-bold flex items-center justify-center"
-                style={{
-                  background: "hsl(var(--background))",
-                  color: "hsl(var(--primary))",
-                  boxShadow:
-                    "0 4px 12px rgba(0,0,0,0.15), inset 0 0 0 1px hsl(var(--primary) / 0.15)",
-                }}
-              >
-                {totalItems > 9 ? "9+" : totalItems}
-              </motion.span>
+              {totalItems > 0 && (
+                <motion.span
+                  key={totalItems}
+                  initial={{ scale: 1.5 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -top-3 -right-3 w-[22px] h-[22px] rounded-full text-[11px] font-bold flex items-center justify-center"
+                  style={{
+                    background: "hsl(var(--background))",
+                    color: "hsl(var(--primary))",
+                    boxShadow:
+                      "0 4px 12px rgba(0,0,0,0.15), inset 0 0 0 1px hsl(var(--primary) / 0.15)",
+                  }}
+                >
+                  {totalItems > 9 ? "9+" : totalItems}
+                </motion.span>
+              )}
             </div>
 
             <span
