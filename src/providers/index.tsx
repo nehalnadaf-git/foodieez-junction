@@ -38,7 +38,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
                 <TableProvider>
                   <CartProvider>
                     <Toaster />
-                    <Sonner />
+                    <Sonner position="bottom-left" />
                     <SessionExpiryBannerWrapper />
                     <PWAInstallPrompt />
                     {children}
