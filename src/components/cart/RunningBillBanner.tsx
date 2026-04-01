@@ -11,7 +11,7 @@ interface RunningBillBannerProps {
 }
 
 export function RunningBillBanner({ session, currentOrderTotal }: RunningBillBannerProps) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(currentOrderTotal === 0);
 
   if (!session || session.orders.length === 0) return null;
 
