@@ -149,7 +149,8 @@ export function generateFinalBill(params: {
 
   // Build current order object (not yet in session)
   const currentOrderNumber = session.totalOrdersCount + 1;
-  const currentItems: PayAtLastItemRecord[] = cartItemsToRecords(currentCartItems);
+  const currentItems: PayAtLastItemRecord[] =
+    cartItemsToRecords(currentCartItems);
 
   // All orders: past (in session) + current cart
   const allOrders = [
@@ -186,7 +187,9 @@ export function generateFinalBill(params: {
 
   for (const order of allOrders) {
     if (order.specialInstructions?.trim()) {
-      allNotes.push(`Order ${order.orderNumber}: ${order.specialInstructions.trim()}`);
+      allNotes.push(
+        `Order ${order.orderNumber}: ${order.specialInstructions.trim()}`,
+      );
     }
 
     for (const item of order.items) {
@@ -257,11 +260,6 @@ export function generateFinalBill(params: {
   lines.push("Thank you for dining with us!");
   lines.push(SEP);
 
-  // ── Payment disclaimer ───────────────────────────────────────────────────
-  lines.push("Do not pay until");
-  lines.push("order is confirmed.");
-  lines.push(SEP);
-
   return lines.join("\n");
 }
 
@@ -269,6 +267,9 @@ export function generateFinalBill(params: {
  * Calculates the total grand total for the final bill
  * (all previous orders + current cart total).
  */
-export function calcFinalBillTotal(session: DineSession, currentOrderTotal: number): number {
+export function calcFinalBillTotal(
+  session: DineSession,
+  currentOrderTotal: number,
+): number {
   return Math.round(session.runningTotal + currentOrderTotal);
 }

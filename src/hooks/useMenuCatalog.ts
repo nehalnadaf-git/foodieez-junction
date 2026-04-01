@@ -20,7 +20,7 @@ export function useMenuCatalog(): MenuCatalogState {
   const catalog = useQuery(api.menu.getCatalog);
 
   return useMemo(() => {
-    // If loading, or if the database is empty, fallback to the default static data
+    // If loading, or if the database is empty, use the default static data
     if (
       catalog === undefined ||
       (catalog.categories.length === 0 && catalog.items.length === 0)

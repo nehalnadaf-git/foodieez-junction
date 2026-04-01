@@ -9,7 +9,7 @@ const FloatingCart = () => {
   const { totalItems, totalPrice, setIsCartOpen, isCartOpen } = useCart();
   const { hasActiveOrders, isHydrated } = usePayAtLast();
 
-  const shouldShow = (totalItems > 0 || (isHydrated && hasActiveOrders)) && !isCartOpen;
+  const shouldShow = !isCartOpen;
 
   return (
     <AnimatePresence>
