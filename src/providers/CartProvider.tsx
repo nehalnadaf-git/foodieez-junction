@@ -172,7 +172,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (restored.length > 0) {
         setItems(restored);
-        toast.success("Your previous cart has been restored");
+        toast.success("Cart restored", {
+          style: {
+            width: "fit-content",
+            minWidth: "120px",
+            padding: "8px 12px",
+          },
+        });
       }
     }
 
