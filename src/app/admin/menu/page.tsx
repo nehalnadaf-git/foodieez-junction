@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { GripVertical, Pencil, Plus, RotateCcw, Save, Trash2 } from "lucide-react";
+import { GripVertical, Pencil, Plus, RotateCcw, Save, Trash2, ImageOff } from "lucide-react";
 import { toast } from "sonner";
 import {
   categories as defaultCategories,
@@ -276,6 +276,7 @@ export default function AdminMenuPage() {
   const catalog = useQuery(api.menu.getCatalog);
   const saveCatalog = useMutation(api.menu.saveCatalog);
   const saveCategoryLayout = useMutation(api.menu.saveCategoryLayout);
+  const fixImageExtensions = useMutation(api.menu.fixImageExtensions);
 
   useEffect(() => {
     if (catalog && !isLoaded) {
@@ -577,6 +578,16 @@ export default function AdminMenuPage() {
     toast.success("Menu catalog reset to defaults");
   };
 
+  const handleFixImages = async () => {
+    try {
+      const result = await fixImageExtensions({});
+      toast.success(`Fixed ${(result as any).fixed} image path(s) — refreshing…`);
+      setTimeout(() => window.location.reload(), 1200);
+    } catch {
+      toast.error("Failed to fix image paths");
+    }
+  };
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -594,14 +605,24 @@ export default function AdminMenuPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleResetDefaults}
-          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/85 transition-all duration-200 hover:border-primary/30 hover:text-primary"
-        >
-          <RotateCcw className="h-4 w-4" />
-          Reset to Defaults
-        </button>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={handleFixImages}
+            className="inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-sm font-semibold text-amber-400 transition-all duration-200 hover:bg-amber-500/20"
+          >
+            <ImageOff className="h-4 w-4" />
+            Fix Image Paths
+          </button>
+          <button
+            type="button"
+            onClick={handleResetDefaults}
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white/85 transition-all duration-200 hover:border-primary/30 hover:text-primary"
+          >
+            <RotateCcw className="h-4 w-4" />
+            Reset to Defaults
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

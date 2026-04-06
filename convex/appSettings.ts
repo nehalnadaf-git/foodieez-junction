@@ -1,6 +1,8 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+const DELIVERY_UPI_KEY = "deliveryRestrictUPIOnly";
+
 const DEFAULTS: Record<string, string> = {
   "order.dineInWhatsappNumber": "+91 9743862836",
   "order.takeawayWhatsappNumber": "+91 9743862836",
@@ -48,6 +50,37 @@ export const set = mutation({
       await db.patch(existing._id, { value });
     } else {
       await db.insert("appSettings", { key, value });
+    }
+  },
+});
+
+// ── Delivery UPI-only restriction ────────────────────────────────────────────
+
+export const getDeliveryRestrictUPIOnly = query({
+  args: {},
+  handler: async ({ db }) => {
+    const setting = await db
+      .query("appSettings")
+      .withIndex("by_key", (q) => q.eq("key", DELIVERY_UPI_KEY))
+      .first();
+    return setting?.value === "true";
+  },
+});
+
+export const setDeliveryRestrictUPIOnly = mutation({
+  args: { enabled: v.boolean() },
+  handler: async ({ db }, { enabled }) => {
+    const existing = await db
+      .query("appSettings")
+      .withIndex("by_key", (q) => q.eq("key", DELIVERY_UPI_KEY))
+      .first();
+    if (existing) {
+      await db.patch(existing._id, { value: enabled.toString() });
+    } else {
+      await db.insert("appSettings", {
+        key: DELIVERY_UPI_KEY,
+        value: enabled.toString(),
+      });
     }
   },
 });

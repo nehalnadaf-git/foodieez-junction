@@ -132,6 +132,36 @@ export const saveCatalog = mutation({
   },
 });
 
+// ── One-time migration: .png → .webp ────────────────────────────────────────
+export const fixImageExtensions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    let fixed = 0;
+
+    const items = await ctx.db.query("menuItems").collect();
+    for (const item of items) {
+      if (item.image && /\.png(\?.*)?$/i.test(item.image)) {
+        await ctx.db.patch(item._id, {
+          image: item.image.replace(/\.png(\?[^"]*)?$/i, ".webp"),
+        });
+        fixed++;
+      }
+    }
+
+    const cats = await ctx.db.query("categories").collect();
+    for (const cat of cats) {
+      if (cat.image && /\.png(\?.*)?$/i.test(cat.image)) {
+        await ctx.db.patch(cat._id, {
+          image: cat.image.replace(/\.png(\?[^"]*)?$/i, ".webp"),
+        });
+        fixed++;
+      }
+    }
+
+    return { fixed };
+  },
+});
+
 export const setAvailabilityBulk = mutation({
   args: {
     updates: v.array(

@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { getCategoryImage } from "@/data/menuData";
+import { isBase64Image } from "@/utils/image";
 import { useMenuCatalog } from "@/hooks/useMenuCatalog";
 import { getVisibleSortedCategories } from "@/utils/categoryOrder";
 
@@ -76,13 +77,13 @@ const CategoriesGrid = () => {
                   {/* Image container */}
                   <div className="w-20 h-20 flex items-center justify-center transition-all duration-300 relative">
                     <Image
-                      src={getCategoryImage(cat.id)}
+                      src={cat.image && cat.image.trim().length > 0 ? cat.image : getCategoryImage(cat.id)}
                       alt={`${cat.name} — Foodieez Junction`}
                       width={72}
                       height={72}
                       className="object-contain group-hover:scale-110 transition-transform duration-400 drop-shadow-xl"
                       loading="lazy"
-                      unoptimized
+                      unoptimized={isBase64Image(cat.image ?? "") || true}
                     />
                   </div>
 

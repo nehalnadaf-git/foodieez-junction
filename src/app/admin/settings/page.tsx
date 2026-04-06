@@ -8,6 +8,7 @@ import { useAppSettings } from "@/context/AppSettingsContext";
 import { SocialMediaLinks } from "@/components/admin/settings/SocialMediaLinks";
 import { DineInToggleCard } from "@/components/admin/settings/DineInToggleCard";
 import { DeliverySettingsCard } from "@/components/admin/settings/DeliverySettingsCard";
+import { DeliveryUPIRestrictionCard } from "@/components/admin/settings/DeliveryUPIRestrictionCard";
 
 type SettingsFormValues = {
   restaurantAddress: string;
@@ -110,6 +111,8 @@ export default function AdminSettingsPage() {
       <DineInToggleCard />
 
       <DeliverySettingsCard />
+
+      <DeliveryUPIRestrictionCard />
     </motion.section>
   );
 }

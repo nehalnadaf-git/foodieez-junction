@@ -34,9 +34,9 @@ export function validateImageFile(file: File): string | null {
     return "Only JPG, PNG and WEBP images are allowed";
   }
 
-  const maxBytes = 2 * 1024 * 1024;
+  const maxBytes = 500 * 1024; // 500KB — keeps base64 under Convex's 1MB document limit
   if (file.size > maxBytes) {
-    return "Image must be under 2MB";
+    return "Image must be under 500KB. Use WebP for smaller files (try squoosh.app)";
   }
 
   return null;

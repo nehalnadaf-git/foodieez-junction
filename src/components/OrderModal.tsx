@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { X, Check, ShoppingBag, UtensilsCrossed, Truck } from "lucide-react";
+import { X, Check, ShoppingBag, UtensilsCrossed, Truck, Lock } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import type { CartItem } from "@/context/CartContext";
@@ -11,6 +11,7 @@ import { generateOrderToken } from "@/utils/order";
 import { buildWhatsAppMessage, openWhatsApp } from "../utils/whatsapp";
 import type { WhatsAppLineItem } from "../utils/whatsapp";
 import { generateDeliveryMessage } from "@/utils/deliveryMessages";
+import { usePaymentOptions } from "@/hooks/usePaymentOptions";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { formatOrderDateTime } from "@/utils/formatDateTime";
@@ -49,13 +50,16 @@ const OrderModal = () => {
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [deliveryMapLink, setDeliveryMapLink] = useState("");
 
+  // ── Payment options: driven by QR scan, order type & delivery admin toggle ─
+  const { showCash, showUPI } = usePaymentOptions(orderType);
+
   const availablePayments = useMemo<PaymentMethod[]>(() => {
     const methods: PaymentMethod[] = [];
-    if (settings.upi.enableCash) methods.push("cash");
-    if (settings.upi.enableUpi) methods.push("upi");
-    if (methods.length === 0) methods.push("cash");
+    if (showCash) methods.push("cash");
+    if (showUPI) methods.push("upi");
+    if (methods.length === 0) methods.push("upi"); // UPI is the universal fallback
     return methods;
-  }, [settings.upi.enableCash, settings.upi.enableUpi]);
+  }, [showCash, showUPI]);
 
   useEffect(() => {
     const handler = () => {
@@ -64,7 +68,7 @@ const OrderModal = () => {
       setOrderType(hasQrTable ? "dine-in" : null);
       setName("");
       setTableNo(scannedTableNumber ?? "");
-      setPayment(availablePayments[0] ?? "cash");
+      setPayment(availablePayments[0] ?? "upi");
       setSpecialInstructions("");
       setCustomerPhone("");
       setDeliveryAddress("");
@@ -75,7 +79,16 @@ const OrderModal = () => {
     };
     window.addEventListener("open-order-modal", handler);
     return () => window.removeEventListener("open-order-modal", handler);
-  }, [availablePayments, scannedTableNumber, settings.order.orderIdPrefix, hasQrTable]);
+  }, [scannedTableNumber, settings.order.orderIdPrefix, hasQrTable]);
+
+  // When the order type changes the set of available payments may change;
+  // ensure the currently-selected payment is still valid.
+  useEffect(() => {
+    if (payment && !availablePayments.includes(payment)) {
+      setPayment(availablePayments[0] ?? "upi");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [availablePayments]);
 
   const close = useCallback(() => {
     if (isSubmitting) return;
@@ -103,10 +116,8 @@ const OrderModal = () => {
     return true;
   }, [step, orderType, name, tableNo, payment, customerPhone, deliveryAddress, deliveryMapLink, isDelivery, deliveryBelowMinimum]);
 
-  // Total steps: delivery has one extra (address)
-  const totalSteps = isDelivery
-    ? availablePayments.length === 1 ? 4 : 5
-    : availablePayments.length === 1 ? 3 : 4;
+  // Total steps: delivery has one extra (address); payment step always shown
+  const totalSteps = isDelivery ? 5 : 4;
 
   const isLastStep = step === totalSteps;
 
@@ -571,31 +582,55 @@ const OrderModal = () => {
                   )}
 
                   {/* ── Payment Step ── */}
-                  {((step === 3 && !isDelivery) || (step === 4 && isDelivery)) && availablePayments.length > 1 && (
+                  {((step === 3 && !isDelivery) || (step === 4 && isDelivery)) && (
                     <div>
                       <h3 className="text-2xl font-display text-foreground tracking-wider mb-6">Payment Method 💳</h3>
                       <div className="grid grid-cols-2 gap-4">
-                        {(["cash", "upi"] as const).map((method) => {
-                          const isAvailable = availablePayments.includes(method);
-                          return (
-                            <button
-                              key={method}
-                              onClick={() => isAvailable && setPayment(method)}
-                              disabled={!isAvailable}
-                              className={`relative glass p-6 text-center transition-all rounded-xl ${payment === method ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]" : "hover:border-primary/30"} disabled:opacity-40 disabled:cursor-not-allowed`}
-                            >
-                              {payment === method && (
-                                <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
-                                  <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
-                                </div>
-                              )}
-                              <span className="text-3xl block mb-2">{method === "cash" ? "💵" : "📲"}</span>
-                              <span className="font-heading font-bold text-sm text-foreground uppercase">
-                                {method === "cash" ? (isDelivery ? "Cash on Delivery" : "Cash") : "UPI"}
-                              </span>
-                            </button>
-                          );
-                        })}
+
+                        {/* ── Cash card: active or locked ── */}
+                        {showCash ? (
+                          <button
+                            onClick={() => setPayment("cash")}
+                            className={`relative glass p-6 text-center transition-all rounded-xl ${payment === "cash" ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]" : "hover:border-primary/30"}`}
+                          >
+                            {payment === "cash" && (
+                              <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                                <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
+                              </div>
+                            )}
+                            <span className="text-3xl block mb-2">💵</span>
+                            <span className="font-heading font-bold text-sm text-foreground uppercase">
+                              {isDelivery ? "Cash on Delivery" : "Cash"}
+                            </span>
+                          </button>
+                        ) : (
+                          <div className="glass rounded-xl border border-dashed border-muted-foreground/25 p-4 flex flex-col items-center text-center gap-1.5 opacity-60 cursor-not-allowed select-none">
+                            <Lock className="w-5 h-5 text-muted-foreground/50 mb-0.5" />
+                            <span className="font-heading font-bold text-sm text-muted-foreground/70 uppercase">
+                              {isDelivery ? "Cash on Delivery" : "Cash"}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground/50 leading-relaxed font-body mt-0.5">
+                              {isDelivery
+                                ? "Cash on Delivery is currently unavailable for delivery orders."
+                                : "Only available at our store. Visit us or scan your table QR code to unlock."}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* ── UPI card: always active ── */}
+                        <button
+                          onClick={() => setPayment("upi")}
+                          className={`relative glass p-6 text-center transition-all rounded-xl ${payment === "upi" ? "border-2 border-primary bg-primary/10 shadow-[0_0_20px_rgba(245,166,35,0.2)]" : "hover:border-primary/30"}`}
+                        >
+                          {payment === "upi" && (
+                            <div className="absolute top-3 right-3 w-5 h-5 bg-primary rounded-full flex items-center justify-center animate-scale-in">
+                              <Check className="w-3.5 h-3.5 text-primary-foreground stroke-[3px]" />
+                            </div>
+                          )}
+                          <span className="text-3xl block mb-2">📲</span>
+                          <span className="font-heading font-bold text-sm text-foreground uppercase">UPI</span>
+                        </button>
+
                       </div>
                     </div>
                   )}

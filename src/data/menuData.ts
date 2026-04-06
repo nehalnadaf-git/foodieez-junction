@@ -309,7 +309,7 @@ export const menuItems: MenuItem[] = [
     category: "combo",
     isVeg: true,
     price: 70,
-    image: "/Products/Combo rice/Veg Manchurian Rice.webp",
+    image: "/Products/Combo rice/Veg combination rice.webp",
   },
   {
     id: "cb2",
