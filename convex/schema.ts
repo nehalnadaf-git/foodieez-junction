@@ -70,6 +70,8 @@ export default defineSchema({
     ),
     totalAmount: v.number(),
     status: v.string(), // "pending" | "preparing" | "completed" | "cancelled"
+    serverTimestamp: v.optional(v.number()), // server-side Date.now() for accurate order time
+    customerPhone: v.optional(v.string()),
   }).index("by_orderId", ["orderId"]).index("by_status", ["status"]),
 
   // ── NEW TABLES (localStorage → Convex migration) ──
