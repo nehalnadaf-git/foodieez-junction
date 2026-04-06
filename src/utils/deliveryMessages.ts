@@ -102,6 +102,7 @@ export function generateDeliveryMessage(input: DeliveryMessageInput): string {
   } else {
     lines.push(`Delivery Charge  : ${rs(input.deliveryCharge)}`);
   }
+  lines.push("");
   lines.push(`TOTAL DUE        : ${rs(input.totalDue)}`);
   lines.push(SEP);
 

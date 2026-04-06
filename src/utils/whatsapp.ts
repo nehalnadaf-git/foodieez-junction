@@ -115,6 +115,7 @@ export function buildWhatsAppMessage(input: BuildWhatsAppMessageInput): string {
   if (input.totalSavings > 0) {
     lines.push(`Savings   : ${rs(input.totalSavings)}`);
   }
+  lines.push("");
   lines.push(`TOTAL DUE : ${rs(input.totalAmount)}`);
   lines.push(d);
 

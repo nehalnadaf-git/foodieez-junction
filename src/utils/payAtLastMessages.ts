@@ -235,8 +235,8 @@ export function generateFinalBill(params: {
   lines.push(`Subtotal  : ${rs(totalSubtotal)}`);
   if (totalSavings > 0) {
     lines.push(`Savings   : ${rs(totalSavings)}`);
-    lines.push("");
   }
+  lines.push("");
   lines.push(`TOTAL DUE : ${rs(totalDue)}`);
   lines.push(SEP);
 
