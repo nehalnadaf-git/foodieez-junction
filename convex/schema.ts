@@ -72,6 +72,10 @@ export default defineSchema({
     status: v.string(), // "pending" | "preparing" | "completed" | "cancelled"
     serverTimestamp: v.optional(v.number()), // server-side Date.now() for accurate order time
     customerPhone: v.optional(v.string()),
+    deliveryCharge: v.optional(v.number()),
+    deliveryAddress: v.optional(v.string()),
+    deliveryMapLink: v.optional(v.string()),
+    deliveryArea: v.optional(v.string()),
   }).index("by_orderId", ["orderId"]).index("by_status", ["status"]),
 
   // ── NEW TABLES (localStorage → Convex migration) ──
